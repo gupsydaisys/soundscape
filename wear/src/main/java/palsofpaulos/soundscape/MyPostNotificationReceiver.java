@@ -16,17 +16,18 @@ public class MyPostNotificationReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
-        Intent displayIntent = new Intent(context, MyDisplayActivity.class);
-        String text = intent.getStringExtra(CONTENT_KEY);
-        Notification notification = new Notification.Builder(context)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setContentTitle(text)
-                .extend(new Notification.WearableExtender()
-                        .setDisplayIntent(PendingIntent.getActivity(context, 0, displayIntent,
-                                PendingIntent.FLAG_UPDATE_CURRENT)))
-                .build();
-        ((NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE)).notify(0, notification);
-
-        Toast.makeText(context, context.getString(R.string.notification_posted), Toast.LENGTH_SHORT).show();
+        return;
+//        Intent displayIntent = new Intent(context, MyDisplayActivity.class);
+//        String text = intent.getStringExtra(CONTENT_KEY);
+//        Notification notification = new Notification.Builder(context)
+//                .setSmallIcon(R.mipmap.ic_launcher)
+//                .setContentTitle(text)
+//                .extend(new Notification.WearableExtender()
+//                        .setDisplayIntent(PendingIntent.getActivity(context, 0, displayIntent,
+//                                PendingIntent.FLAG_UPDATE_CURRENT)))
+//                .build();
+//        ((NotificationManager) context.getSystemService(Context.NOTIFICATION_SERVICE)).notify(0, notification);
+//
+//        Toast.makeText(context, context.getString(R.string.notification_posted), Toast.LENGTH_SHORT).show();
     }
 }
