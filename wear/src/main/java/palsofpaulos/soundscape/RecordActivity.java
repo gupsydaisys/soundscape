@@ -31,6 +31,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.concurrent.TimeUnit;
 
+import palsofpaulos.soundscape.common.RecordingManager;
+import palsofpaulos.soundscape.common.WearAPIManager;
+
 public class RecordActivity extends Activity  {
 
     private static final String TAG = "Record Activity";
@@ -44,14 +47,9 @@ public class RecordActivity extends Activity  {
     private Channel mApiChannel;
     private String mApiNodeId;
     private String nodeId;
-    public static final String RECORD_CHANNEL = "/record_channel";
 
     /* Recording Parameters */
-    private static final int RECORER_SOURCE = MediaRecorder.AudioSource.MIC;
-    private static final int RECORDER_SAMPLERATE = 20000;
-    private static final int RECORDER_CHANNELS = AudioFormat.CHANNEL_IN_MONO;
-    private static final int RECORDER_AUDIO_ENCODING = AudioFormat.ENCODING_PCM_16BIT;
-    private int bufferSize = AudioRecord.getMinBufferSize(RECORDER_SAMPLERATE, RECORDER_CHANNELS, RECORDER_AUDIO_ENCODING);
+    private int bufferSize = AudioRecord.getMinBufferSize(RecordingManager.SAMPLERATE, RecordingManager.CHANNELS_IN, RecordingManager.ENCODING);
 
     private AudioRecord recorder = null;
     private Thread recordingThread = null;
@@ -120,6 +118,7 @@ public class RecordActivity extends Activity  {
                     public void run() {
                         hideConnectingText();
                         initializeButtons();
+                        toggleRecording();
                     }
                 });
 
@@ -142,6 +141,7 @@ public class RecordActivity extends Activity  {
         } else {
             stopRecording();
             recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_off2));
+            finish();
         }
     }
 
@@ -149,11 +149,11 @@ public class RecordActivity extends Activity  {
 
         // Initialize Audio Recorder.
         recorder = new AudioRecord(
-                RECORER_SOURCE,             // audio source
-                RECORDER_SAMPLERATE,        // sampling rate
-                RECORDER_CHANNELS,          // mono or stereo channels
-                RECORDER_AUDIO_ENCODING,    // encoding
-                bufferSize);                // size of recording buffer
+                RecordingManager.SOURCE,
+                RecordingManager.SAMPLERATE,
+                RecordingManager.CHANNELS_IN,
+                RecordingManager.ENCODING,
+                bufferSize);
         recorder.startRecording();
         isRecording = true;
 
@@ -169,20 +169,21 @@ public class RecordActivity extends Activity  {
         mApiClient.blockingConnect();
 
         // Setup Wear API data channel
-        ChannelApi.OpenChannelResult result = Wearable.ChannelApi.openChannel(mApiClient, mApiNodeId, RECORD_CHANNEL).await();
+        ChannelApi.OpenChannelResult result = Wearable.ChannelApi.openChannel(mApiClient, mApiNodeId, WearAPIManager.RECORD_CHANNEL).await();
         mApiChannel = result.getChannel();
 
         // Get the channel output stream
         Channel.GetOutputStreamResult outputStreamResult = mApiChannel.getOutputStream(mApiClient).await();
         OutputStream outputStream = outputStreamResult.getOutputStream();
 
-        byte[] sData = new byte[bufferSize];
+        // Buffer to hold audio data
+        byte[] bData = new byte[bufferSize];
 
         // Send recording data over channel while recording
         while (isRecording) {
-            recorder.read(sData, 0, bufferSize);
+            recorder.read(bData, 0, bufferSize);
             try {
-                outputStream.write(sData, 0, bufferSize);
+                outputStream.write(bData, 0, bufferSize);
             }
             catch (IOException e) {
                 e.printStackTrace();

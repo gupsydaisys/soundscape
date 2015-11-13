@@ -18,6 +18,7 @@
     <include layout="@layout/content_audio" />
 
     <RelativeLayout
+        android:id="@+id/audio_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
