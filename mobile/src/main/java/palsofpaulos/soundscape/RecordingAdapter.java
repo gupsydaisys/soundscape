@@ -2,7 +2,6 @@ package palsofpaulos.soundscape;
 
 import android.app.Activity;
 import android.content.Context;
-import android.provider.MediaStore;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -40,7 +39,7 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
             holder.playButton = (ImageView) row.findViewById(R.id.play_pause);
             holder.delButton = (TextView) row.findViewById(R.id.delete_button);
             holder.recText = (TextView) row.findViewById(R.id.rec_text);
-            holder.recLenth = (TextView) row.findViewById(R.id.recLength);
+            holder.recLength = (TextView) row.findViewById(R.id.recLength);
 
             row.setTag(holder);
         } else {
@@ -48,8 +47,8 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
         }
 
         final Recording rec = recs.get(position);
-        holder.recText.setText(rec.getFilePath());
-        holder.recLenth.setText(rec.lengthString());
+        holder.recText.setText(String.valueOf(rec.getId()));
+        holder.recLength.setText(rec.lengthString());
         holder.playButton.setImageResource(R.drawable.play2);
 
         final PostPlayListener postPlayListener = new PostPlayListener() {
@@ -94,6 +93,6 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
         ImageView playButton;
         TextView delButton;
         TextView recText;
-        TextView recLenth;
+        TextView recLength;
     }
 }

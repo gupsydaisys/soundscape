@@ -8,6 +8,8 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.google.android.gms.maps.model.LatLng;
+
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -28,6 +30,7 @@ public class Recording {
     private int id;
     private String name;
     private byte[] data;
+    private LatLng location;
 
     private PlayAudioTask playTask;
     private boolean isPlaying;
@@ -35,13 +38,22 @@ public class Recording {
     public Recording(String filePath) {
         this.filePath = filePath;
         this.file = new File(filePath);
-        this.id = lastId++;
+        try {
+            int idloc = filePath.indexOf("_id") + 3;
+            if (idloc == -1) {
+                throw new IOException("Path does not contain a valid recording: " + filePath);
+            }
+            this.id = Integer.valueOf(filePath.substring(idloc, filePath.length() - 4));
+        }
+        catch (IOException e) {
+            Log.e(TAG, e.getMessage());
+        }
     }
 
     public Recording(InputStream inputStream, String pathName) {
 
         this.id = lastId++;
-        this.filePath = pathName + id + ".pcm";
+        this.filePath = pathName + "_id" + id + ".pcm";
         this.file = new File(filePath);
 
         OutputStream outputStream = null;
@@ -101,8 +113,11 @@ public class Recording {
 
 
 
-    /* Playback Methods and Classes */
+    /* Playback Methods
+     * --------------------------------------- */
 
+    /* starts recording if it hasn't started
+     * resumes playback if it was was paused */
     public void play() {
         if (playTask != null) {
             playTask.play();
@@ -149,7 +164,9 @@ public class Recording {
     }
 
 
-    /* Executing a PlayAudioTask will play the recording. If the
+    /* An asynchronous task to handle playing the recording.
+     *
+     * Executing a PlayAudioTask will play the recording. If the
      * Task is instantiated with a postPlayListener then you can
      * specify a callback for when the recording has finished playing.
      */
@@ -178,18 +195,9 @@ public class Recording {
         protected Void doInBackground(Void... params) {
             Log.d(TAG, "Attempting to play audio at path " + filePath);
             isPlaying = true;
-            // We keep temporarily filePath globally as we have only two sample sounds now..
-            if (file == null) {
-                if (filePath == null) {
-                    Log.e(TAG, "Filepath error!");
-                    return null;
-                }
-                file = new File(filePath);
-            }
 
-            // Reading the file..
+            // Read the file
             byte[] byteData = new byte[(int) file.length()];
-
             FileInputStream in;
             try {
                 in = new FileInputStream(file);
@@ -200,13 +208,7 @@ public class Recording {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            // Set and push to audio track..
-            int intSize = android.media.AudioTrack.getMinBufferSize(RecordingManager.SAMPLERATE, RecordingManager.CHANNELS_OUT, RecordingManager.ENCODING);
 
-            int bdlen = byteData.length;
-            if (bdlen == 0) {
-                return null;
-            }
             track = new AudioTrack(AudioManager.STREAM_MUSIC, RecordingManager.SAMPLERATE, RecordingManager.CHANNELS_OUT, RecordingManager.ENCODING, byteData.length, AudioTrack.MODE_STATIC);
             if (track != null) {
 
@@ -232,6 +234,8 @@ public class Recording {
             return null;
         }
 
+
+
         @Override
         protected void onCancelled(Void result) {
             if (track != null) {
@@ -243,19 +247,14 @@ public class Recording {
             postPlayListener.onFinished();
         }
 
+
+        // Called once audio playback has been initialized
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
-            /* this actually gets called as soon as the audio track is set up
-             * and starts playing
-            playTask = null;
-            if (postPlayListener != null) {
-                postPlayListener.onFinished();
-            }
-            */
         }
 
-        public void pause() {
+        private void pause() {
             Log.d(TAG, "Pausing Recording");
             if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
                 isPlaying = false;
@@ -263,7 +262,7 @@ public class Recording {
             }
         }
 
-        public void play() {
+        private void play() {
             Log.d(TAG, "Resuming recording");
             if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
                 isPlaying = true;
@@ -271,7 +270,7 @@ public class Recording {
             }
         }
 
-        public void stop() {
+        private void stop() {
             Log.d(TAG, "Stopping recording");
             if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
                 isPlaying = false;

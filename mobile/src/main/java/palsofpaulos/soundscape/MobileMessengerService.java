@@ -1,5 +1,6 @@
 package palsofpaulos.soundscape;
 
+import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -38,8 +39,7 @@ import palsofpaulos.soundscape.common.WearAPIManager;
 public class MobileMessengerService extends WearableListenerService {
 
     private static final String TAG = "Mobile Listener";
-
-    public Recording recording;
+    private static final int RECORD_SERVICE_ID = 420;
 
     private GoogleApiClient mApiClient;
 
@@ -79,13 +79,7 @@ public class MobileMessengerService extends WearableListenerService {
     @Override
     public void onChannelClosed(Channel channel, int closeReason, int appSpecificErrorCode) {
         if (channel.getPath().equals(WearAPIManager.RECORD_CHANNEL)) {
-            if (recording == null) {
-                Log.e(TAG, "Recording finished but the recording object was not created");
-            }
-            else {
-                Log.d(TAG, "recording channel closed, attempting to play audio");
-                startAudioActivity();
-            }
+            // do nothing
         }
     }
 
@@ -96,7 +90,7 @@ public class MobileMessengerService extends WearableListenerService {
                 .build();
     }
 
-    private void startAudioActivity() {
+    private void sendRecordingToAudioActivity(Recording recording) {
         Intent audioIntent = new Intent(WearAPIManager.AUDIO_INTENT);
         audioIntent.putExtra("filePath", recording.getFilePath());
         sendBroadcast(audioIntent);
@@ -104,6 +98,7 @@ public class MobileMessengerService extends WearableListenerService {
 
     private void getRecordingFromChannel(final Channel channel) {
         final String rootPath = this.getFilesDir().getPath();
+
         Thread recordThread = new Thread(new Runnable() {
             public void run() {
                 if (!mApiClient.isConnected()) {
@@ -112,7 +107,8 @@ public class MobileMessengerService extends WearableListenerService {
                 }
                 Channel.GetInputStreamResult getInputStreamResult = channel.getInputStream(mApiClient).await();
                 InputStream inputStream = getInputStreamResult.getInputStream();
-                recording = new Recording(inputStream, rootPath);
+                Recording recording = new Recording(inputStream, rootPath);
+                sendRecordingToAudioActivity(recording);
             }
         }, "RecordFile Thread");
         recordThread.start();

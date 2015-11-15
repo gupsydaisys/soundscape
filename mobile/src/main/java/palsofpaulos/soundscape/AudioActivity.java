@@ -7,28 +7,16 @@ import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.View;
-import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.ImageView;
 import android.widget.ListView;
 
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.wearable.Channel;
-import java.io.InputStream;
 import java.util.ArrayList;
 
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.WearAPIManager;
 
 public class AudioActivity extends AppCompatActivity {
-
-    /* Wear Data API */
-    private GoogleApiClient mApiClient;
-    private Channel mApiChannel;
-    private InputStream inputStream;
 
     /* Recordings Data */
     private ArrayList<Recording> recs = new ArrayList<>();
@@ -42,8 +30,7 @@ public class AudioActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio);
 
-        // Get recordings from saved preferences and
-        // populate the listview with them
+        // get recordings from saved preferences and populate listview
         getRecordings();
         recsView = (ListView) findViewById(R.id.listRecordings);
         recsAdapter = new RecordingAdapter(this, R.layout.listview_recordings, recs);
@@ -75,7 +62,7 @@ public class AudioActivity extends AppCompatActivity {
 
 
 
-
+    /* Methods to Handle Recording Data */
 
     private void getRecordings() {
         recs.clear();

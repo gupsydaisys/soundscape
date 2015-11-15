@@ -18,10 +18,10 @@
     <LinearLayout
         android:orientation="vertical"
         android:layout_width="0dip"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:background="@color/recViewBackground"
         android:padding="4dip"
-        android:layout_weight="1">
+        android:layout_weight=".8">
 
         <TextView android:id="@+id/rec_text"
             android:layout_width="match_parent"
@@ -45,9 +45,11 @@
         android:background="@color/deleteRed"
         android:text="Delete"
         android:textSize="15sp"
+        android:layout_gravity="end"
         android:gravity="center"
         android:textColor="@color/white"
-        android:layout_width="50dip"
+        android:layout_weight=".2"
+        android:layout_width="0dip"
         android:layout_height="match_parent" />
 
 </LinearLayout>
