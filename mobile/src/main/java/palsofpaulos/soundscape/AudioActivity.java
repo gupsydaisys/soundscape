@@ -22,8 +22,6 @@ import java.util.ArrayList;
 
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.WearAPIManager;
-import palsofpaulos.soundscape.common.Recording.PostPlayListener;
-import palsofpaulos.soundscape.common.Recording.PlayAudioTask;
 
 public class AudioActivity extends AppCompatActivity {
 
@@ -50,24 +48,6 @@ public class AudioActivity extends AppCompatActivity {
         recsView = (ListView) findViewById(R.id.listRecordings);
         recsAdapter = new RecordingAdapter(this, R.layout.listview_recordings, recs);
         recsView.setAdapter(recsAdapter);
-
-//        recsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-//            @Override
-//            public void onItemClick(AdapterView<?> adapter, View view, int position, long id) {
-//                ImageView playButton = (ImageView) findViewById(R.id.play_pause);
-//                playButton.setImageResource(R.drawable.pause);
-//
-//                Recording rec = recs.get(position);
-//                if (view.getId() == R.id.delete_button) {
-//                    if (rec.isPlaying()) {
-//                        rec.stop();
-//                    }
-//                    rec.getFile().delete();
-//                    recs.remove(position);
-//                    updateRecsView();
-//                }
-//            }
-//        });
 
         registerReceiver(audioReceiver, new IntentFilter(WearAPIManager.AUDIO_INTENT));
     }

@@ -29,7 +29,8 @@ public class Recording {
     private String name;
     private byte[] data;
 
-    private PlayAudioTask playTask = null;
+    private PlayAudioTask playTask;
+    private boolean isPlaying;
 
     public Recording(String filePath) {
         this.filePath = filePath;
@@ -79,6 +80,10 @@ public class Recording {
 
     public int getId() { return id; }
 
+    public boolean isPlaying() {
+        return this.isPlaying;
+    }
+
     public PlayAudioTask getPlayTask() { return playTask; }
 
     // returns the length of the recording in seconds
@@ -99,8 +104,13 @@ public class Recording {
     /* Playback Methods and Classes */
 
     public void play() {
-        playTask = new PlayAudioTask();
-        playTask.execute();
+        if (playTask != null) {
+            playTask.play();
+        }
+        else {
+            playTask = new PlayAudioTask();
+            playTask.execute();
+        }
     }
 
 
@@ -109,16 +119,21 @@ public class Recording {
      * recording has finished playing
      */
     public void play(PostPlayListener listener) {
-        playTask = new PlayAudioTask(listener);
-        playTask.execute();
+        if (playTask != null) {
+            playTask.play();
+        }
+        else {
+            playTask = new PlayAudioTask(listener);
+            playTask.execute();
+        }
     }
 
-    public boolean isPlaying() {
-        if (playTask != null) {
-            return playTask.getStatus() == AsyncTask.Status.RUNNING;
-        }
-        return false;
+    public void restart() {
+        stop();
+        play();
     }
+
+
 
     public void pause() {
         if (playTask != null) {
@@ -139,14 +154,19 @@ public class Recording {
      * specify a callback for when the recording has finished playing.
      */
 
-    public class PlayAudioTask extends AsyncTask<Void, Void, Void> {
+    private class PlayAudioTask extends AsyncTask<Void, Void, Void> {
 
         private final PostPlayListener postPlayListener;
 
         private AudioTrack track;
 
         public PlayAudioTask() {
-            this.postPlayListener = null;
+            this.postPlayListener = new PostPlayListener() {
+                @Override
+                public void onFinished() {
+                    // do nothing
+                }
+            };
         }
 
         public PlayAudioTask(PostPlayListener listener) {
@@ -157,6 +177,7 @@ public class Recording {
         @Override
         protected Void doInBackground(Void... params) {
             Log.d(TAG, "Attempting to play audio at path " + filePath);
+            isPlaying = true;
             // We keep temporarily filePath globally as we have only two sample sounds now..
             if (file == null) {
                 if (filePath == null) {
@@ -169,7 +190,7 @@ public class Recording {
             // Reading the file..
             byte[] byteData = new byte[(int) file.length()];
 
-            FileInputStream in = null;
+            FileInputStream in;
             try {
                 in = new FileInputStream(file);
                 in.read(byteData);
@@ -201,6 +222,9 @@ public class Recording {
                         Log.d(TAG, "stopping audio");
                         track.stop();
                         track.release();
+                        isPlaying = false;
+                        playTask = null;
+                        postPlayListener.onFinished();
                     }
                 });
             }
@@ -213,23 +237,28 @@ public class Recording {
             if (track != null) {
                 track.stop();
                 track.release();
-                playTask = null;
             }
+            isPlaying = false;
+            playTask = null;
+            postPlayListener.onFinished();
         }
 
         @Override
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
-
+            /* this actually gets called as soon as the audio track is set up
+             * and starts playing
             playTask = null;
             if (postPlayListener != null) {
                 postPlayListener.onFinished();
             }
+            */
         }
 
         public void pause() {
             Log.d(TAG, "Pausing Recording");
             if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
+                isPlaying = false;
                 track.pause();
             }
         }
@@ -237,14 +266,19 @@ public class Recording {
         public void play() {
             Log.d(TAG, "Resuming recording");
             if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
+                isPlaying = true;
                 track.play();
             }
         }
 
         public void stop() {
+            Log.d(TAG, "Stopping recording");
             if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
+                isPlaying = false;
+                playTask = null;
                 track.stop();
                 track.release();
+                cancel(true);
             }
         }
     }

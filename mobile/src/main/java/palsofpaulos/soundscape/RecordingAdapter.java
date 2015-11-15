@@ -20,8 +20,6 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
     int layoutResourceId;
     ArrayList<Recording> recs;
 
-    private Recording playingRec;
-
     public RecordingAdapter(Context context, int layoutResourceId, ArrayList<Recording> data) {
         super(context, layoutResourceId, data);
         this.layoutResourceId = layoutResourceId;
@@ -41,7 +39,7 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
             holder = new RecHolder();
             holder.playButton = (ImageView) row.findViewById(R.id.play_pause);
             holder.delButton = (TextView) row.findViewById(R.id.delete_button);
-            holder.recText = (TextView) row.findViewById(R.id.recText);
+            holder.recText = (TextView) row.findViewById(R.id.rec_text);
             holder.recLenth = (TextView) row.findViewById(R.id.recLength);
 
             row.setTag(holder);
@@ -52,48 +50,40 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
         final Recording rec = recs.get(position);
         holder.recText.setText(rec.getFilePath());
         holder.recLenth.setText(rec.lengthString());
-        holder.playButton.setImageResource(R.drawable.play);
-        playingRec = null;
-        holder.isPlay = false;
+        holder.playButton.setImageResource(R.drawable.play2);
 
-        final PostPlayListener playListener = new PostPlayListener() {
+        final PostPlayListener postPlayListener = new PostPlayListener() {
             @Override
             public void onFinished() {
-                playingRec = null;
-                holder.isPlay = false;
-                holder.playButton.setImageResource(R.drawable.play);
+                holder.playButton.setImageResource(R.drawable.play2);
+                holder.playButton.invalidate();
             }
         };
         holder.playButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (playingRec == null) {
-                    playingRec = rec;
-                    rec.play(playListener);
-                    holder.isPlay = true;
-                    holder.playButton.setImageResource(R.drawable.pause);
+                if (!rec.isPlaying()) {
+                    rec.play(postPlayListener);
+                    holder.playButton.setImageResource(R.drawable.pause2);
+                    holder.playButton.invalidate();
                 }
-                else if (playingRec.getId() != rec.getId()) {
-                    playingRec.stop();
-                    playingRec = rec;
-                    rec.play(playListener);
-                    holder.isPlay = true;
-                    holder.playButton.setImageResource(R.drawable.pause);
-                }
-                if (holder.isPlay) {
-                    holder.isPlay = false;
-                    holder.playButton.setImageResource(R.drawable.play);
+                else {
+                    holder.playButton.setImageResource(R.drawable.play2);
+                    holder.playButton.invalidate();
                     rec.pause();
-                } else {
-                    holder.isPlay = true;
-                    holder.playButton.setImageResource(R.drawable.pause);
-                    rec.play();
                 }
             }
         });
+
         holder.delButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                if (rec.isPlaying()) {
+                    rec.stop();
+                }
+                rec.getFile().delete();
+                recs.remove(position);
+                notifyDataSetChanged();
             }
         });
 
@@ -103,7 +93,6 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
     private static class RecHolder {
         ImageView playButton;
         TextView delButton;
-        boolean isPlay;
         TextView recText;
         TextView recLenth;
     }
