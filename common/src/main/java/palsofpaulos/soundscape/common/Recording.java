@@ -29,6 +29,8 @@ public class Recording {
     private String name;
     private byte[] data;
 
+    private PlayAudioTask playTask = null;
+
     public Recording(String filePath) {
         this.filePath = filePath;
         this.file = new File(filePath);
@@ -71,23 +73,34 @@ public class Recording {
     }
 
     /* Getters and Setters */
-    public String getFilePath() {
-        return filePath;
+    public String getFilePath() { return filePath; }
+
+    public File getFile() { return file; }
+
+    public int getId() { return id; }
+
+    public PlayAudioTask getPlayTask() { return playTask; }
+
+    // returns the length of the recording in seconds
+    public long length() {
+        return (file.length() / RecordingManager.SAMPLERATE);
     }
 
-    public PlayAudioTask getAudioTask() {
-        return new PlayAudioTask();
+    public String lengthString() {
+        long len = this.length();
+        return String.format("%d:%d", len / 60, len % 60);
     }
 
-    public PlayAudioTask getAudioTask(PostPlayListener listener) {
-        return new PlayAudioTask(listener);
-    }
+
+
+
 
 
     /* Playback Methods and Classes */
 
     public void play() {
-        new PlayAudioTask().execute();
+        playTask = new PlayAudioTask();
+        playTask.execute();
     }
 
 
@@ -96,7 +109,28 @@ public class Recording {
      * recording has finished playing
      */
     public void play(PostPlayListener listener) {
-        new PlayAudioTask(listener).execute();
+        playTask = new PlayAudioTask(listener);
+        playTask.execute();
+    }
+
+    public boolean isPlaying() {
+        if (playTask != null) {
+            return playTask.getStatus() == AsyncTask.Status.RUNNING;
+        }
+        return false;
+    }
+
+    public void pause() {
+        if (playTask != null) {
+            playTask.pause();
+        }
+    }
+
+    public void stop() {
+        if (playTask != null) {
+            playTask.stop();
+            playTask = null;
+        }
     }
 
 
@@ -148,6 +182,10 @@ public class Recording {
             // Set and push to audio track..
             int intSize = android.media.AudioTrack.getMinBufferSize(RecordingManager.SAMPLERATE, RecordingManager.CHANNELS_OUT, RecordingManager.ENCODING);
 
+            int bdlen = byteData.length;
+            if (bdlen == 0) {
+                return null;
+            }
             track = new AudioTrack(AudioManager.STREAM_MUSIC, RecordingManager.SAMPLERATE, RecordingManager.CHANNELS_OUT, RecordingManager.ENCODING, byteData.length, AudioTrack.MODE_STATIC);
             if (track != null) {
 
@@ -157,9 +195,7 @@ public class Recording {
                 track.setNotificationMarkerPosition(byteData.length/2);
                 track.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
                     @Override
-                    public void onPeriodicNotification(AudioTrack track) {
-                        // nothing to do
-                    }
+                    public void onPeriodicNotification(AudioTrack track) { }
                     @Override
                     public void onMarkerReached(AudioTrack track) {
                         Log.d(TAG, "stopping audio");
@@ -177,6 +213,7 @@ public class Recording {
             if (track != null) {
                 track.stop();
                 track.release();
+                playTask = null;
             }
         }
 
@@ -184,6 +221,7 @@ public class Recording {
         protected void onPostExecute(Void result) {
             super.onPostExecute(result);
 
+            playTask = null;
             if (postPlayListener != null) {
                 postPlayListener.onFinished();
             }
@@ -202,12 +240,17 @@ public class Recording {
                 track.play();
             }
         }
+
+        public void stop() {
+            if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
+                track.stop();
+                track.release();
+            }
+        }
     }
 
     public interface PostPlayListener {
         void onFinished();
     }
-
-
 
 }

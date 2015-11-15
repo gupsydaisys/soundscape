@@ -7,4 +7,6 @@
     <string name="title_activity_record">RecordActivity</string>
     <string name="title_activity_await_record">AwaitRecordActivity</string>
     <string name="hello_world">Hello World!</string>
+
+
 </resources>

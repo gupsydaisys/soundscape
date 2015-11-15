@@ -4,34 +4,23 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
-import android.media.MediaPlayer;
-import android.os.AsyncTask;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.View;
-import android.widget.TextView;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ImageView;
+import android.widget.ListView;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.Channel;
-
-import org.w3c.dom.Text;
-
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 
 import palsofpaulos.soundscape.common.Recording;
-import palsofpaulos.soundscape.common.RecordingManager;
 import palsofpaulos.soundscape.common.WearAPIManager;
 import palsofpaulos.soundscape.common.Recording.PostPlayListener;
 import palsofpaulos.soundscape.common.Recording.PlayAudioTask;
@@ -43,56 +32,107 @@ public class AudioActivity extends AppCompatActivity {
     private Channel mApiChannel;
     private InputStream inputStream;
 
+    /* Recordings Data */
+    private ArrayList<Recording> recs = new ArrayList<>();
+    private ListView recsView;
+    private ArrayAdapter<Recording> recsAdapter;
+    private static final String SAVED_RECS = "ss_rec_list";
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio);
-        Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
+
+        // Get recordings from saved preferences and
+        // populate the listview with them
+        getRecordings();
+        recsView = (ListView) findViewById(R.id.listRecordings);
+        recsAdapter = new RecordingAdapter(this, R.layout.listview_recordings, recs);
+        recsView.setAdapter(recsAdapter);
+
+//        recsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+//            @Override
+//            public void onItemClick(AdapterView<?> adapter, View view, int position, long id) {
+//                ImageView playButton = (ImageView) findViewById(R.id.play_pause);
+//                playButton.setImageResource(R.drawable.pause);
+//
+//                Recording rec = recs.get(position);
+//                if (view.getId() == R.id.delete_button) {
+//                    if (rec.isPlaying()) {
+//                        rec.stop();
+//                    }
+//                    rec.getFile().delete();
+//                    recs.remove(position);
+//                    updateRecsView();
+//                }
+//            }
+//        });
 
         registerReceiver(audioReceiver, new IntentFilter(WearAPIManager.AUDIO_INTENT));
     }
+
+
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
+        saveRecordings();
         unregisterReceiver(audioReceiver);
     }
-
 
     private BroadcastReceiver audioReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            final TextView audioStatusText = (TextView) findViewById(R.id.audio_status_text);
-            audioStatusText.setText("Playing audio!");
 
             final String filePath = intent.getStringExtra("filePath");
-            Recording recording = new Recording(filePath);
-            final PlayAudioTask audioTask = recording.getAudioTask(new PostPlayListener() {
-                @Override
-                public void onFinished() {
-                    audioStatusText.setText("Waiting for audio...");
-                }
-            });
-            audioTask.execute();
-
-            View view = findViewById(R.id.audio_view);
-            view.setOnClickListener(new View.OnClickListener() {
-                private boolean isPaused = false;
-
-                @Override
-                public void onClick(View v) {
-                    if (isPaused) {
-                        isPaused = false;
-                        audioTask.play();
-                    }
-                    else {
-                        isPaused = true;
-                        audioTask.pause();
-                    }
-                }
-            });
+            Recording newRec = new Recording(filePath);
+            recs.add(0, newRec);
+            updateRecsView();
         }
     };
+
+
+
+
+
+    private void getRecordings() {
+        recs.clear();
+        SharedPreferences prefs = getSharedPreferences(SAVED_RECS, MODE_PRIVATE);
+        for (int ii = 0; ; ii++){
+            String recPath = prefs.getString(String.valueOf(ii), "");
+            if (!recPath.equals("")){
+                Recording addRec = new Recording(recPath);
+                recs.add(addRec);
+            } else {
+                Log.d("Recordings Loaded:", String.valueOf(ii));
+                break; // Empty String means the default value was returned.
+            }
+        }
+    }
+
+    private void saveRecordings() {
+        SharedPreferences prefs = getSharedPreferences(SAVED_RECS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        for (int ii = 0; ii < recs.size(); ii++) {
+            editor.putString(String.valueOf(ii), recs.get(ii).getFilePath());
+        }
+        editor.commit();
+    }
+
+    private void clearRecordings() {
+        SharedPreferences prefs = getSharedPreferences(SAVED_RECS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        editor.commit();
+    }
+
+    private void updateRecsView() {
+        recsView.destroyDrawingCache();
+        RecordingAdapter ra = (RecordingAdapter) recsView.getAdapter();
+        ra.notifyDataSetChanged();
+        recsView.invalidate();
+    }
 }

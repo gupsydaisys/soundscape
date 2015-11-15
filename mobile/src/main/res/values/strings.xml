@@ -3,4 +3,6 @@
     <string name="action_settings">Settings</string>
     <string name="title_activity_audio">AudioActivity</string>
     <string name="title_activity_test">TestActivity</string>
+
+    <string name="recording_header">Past Recordings</string>
 </resources>
