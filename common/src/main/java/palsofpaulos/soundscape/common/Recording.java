@@ -1,7 +1,6 @@
 package palsofpaulos.soundscape.common;
 
 import android.media.AudioManager;
-import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.os.AsyncTask;
 import android.util.Log;
@@ -15,6 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.io.RandomAccessFile;
 
 
 public class Recording {
@@ -50,6 +50,8 @@ public class Recording {
         catch (IOException e) {
             Log.e(TAG, e.getMessage());
         }
+        // truncate file for huge recordings
+        truncateFile();
     }
 
     public Recording(InputStream inputStream, String pathName) {
@@ -85,6 +87,8 @@ public class Recording {
                 }
             }
         }
+        // truncate file for huge recordings
+        truncateFile();
     }
 
     /* Getters and Setters */
@@ -101,8 +105,8 @@ public class Recording {
     public PlayAudioTask getPlayTask() { return playTask; }
 
     // returns the length of the recording in seconds
-    public long length() {
-        return (file.length() / RecordingManager.SAMPLERATE);
+    public int length() {
+        return (int) (file.length() / RecordingManager.SAMPLERATE);
     }
 
     public int frameLength() {
@@ -110,15 +114,36 @@ public class Recording {
     }
 
     public String lengthString() {
-        long len = this.length();
-        return String.format("%d:%d", len / 60, len % 60);
+        int len = this.length();
+        int hrs = len / 3600;
+        int min = (len % 3600) / 60;
+        int sec = len % 60;
+        if (hrs > 0) {
+            return String.format("%d:%d:%d", hrs, min, sec);
+        }
+        return String.format("%d:%d", min, sec);
+    }
+    // limits the file to MAX_LENGTH
+    private void truncateFile() {
+        if (file.length() > RecordingManager.MAX_LENGTH) {
+            try {
+                new RandomAccessFile(filePath, "rwd").setLength(RecordingManager.MAX_LENGTH);
+            }
+            catch (Exception e) {
+                Log.e(TAG, "Failed trying to truncate file");
+            }
+        }
     }
 
     public static void setLastId(int lastId) {
         Recording.lastId = lastId;
     }
 
-
+    public void setPlayHead(int position) {
+        if (playTask != null && playTask.track != null) {
+            playTask.setPlayHead(position);
+        }
+    }
 
 
     /* Playback Methods
@@ -216,7 +241,8 @@ public class Recording {
             }
 
             // Read the file
-            byte[] byteData = new byte[(int) file.length()];
+            int byteLength = (int) file.length();
+            byte[] byteData = new byte[byteLength];
             FileInputStream in;
             try {
                 in = new FileInputStream(file);
@@ -228,32 +254,31 @@ public class Recording {
                 e.printStackTrace();
             }
 
-            track = new AudioTrack(AudioManager.STREAM_MUSIC, RecordingManager.SAMPLERATE, RecordingManager.CHANNELS_OUT, RecordingManager.ENCODING, byteData.length, AudioTrack.MODE_STATIC);
-            if (track != null) {
+            track = new AudioTrack(AudioManager.STREAM_MUSIC, RecordingManager.SAMPLERATE, RecordingManager.CHANNELS_OUT, RecordingManager.ENCODING, byteLength, AudioTrack.MODE_STATIC);
 
-                // Write the byte array to the track
-                track.write(byteData, 0, byteData.length);
-                track.setNotificationMarkerPosition(byteData.length / 2);
-                track.setPositionNotificationPeriod(NOTIFICATION_PERIOD);
-                track.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
-                    @Override
-                    public void onPeriodicNotification(AudioTrack track) {
-                        if (track.getState() == AudioTrack.STATE_INITIALIZED) {
-                            playListener.onUpdate(track.getPlaybackHeadPosition());
-                        }
+            // Write the byte array to the track
+            track.write(byteData, 0, byteLength);
+            track.setNotificationMarkerPosition(byteLength / 2);
+            track.setPositionNotificationPeriod(NOTIFICATION_PERIOD);
+            track.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
+                @Override
+                public void onPeriodicNotification(AudioTrack track) {
+                    if (track.getState() == AudioTrack.STATE_INITIALIZED) {
+                        playListener.onUpdate(track.getPlaybackHeadPosition());
                     }
-                    @Override
-                    public void onMarkerReached(AudioTrack track) {
-                        Log.d(TAG, "stopping audio");
-                        track.stop();
-                        track.release();
-                        isPlaying = false;
-                        playTask = null;
-                        playListener.onFinished();
-                    }
-                });
-                track.play();
-            }
+                }
+
+                @Override
+                public void onMarkerReached(AudioTrack track) {
+                    Log.d(TAG, "stopping audio");
+                    track.stop();
+                    track.release();
+                    isPlaying = false;
+                    playTask = null;
+                    playListener.onFinished();
+                }
+            });
+            track.play();
 
             return null;
         }
@@ -306,6 +331,23 @@ public class Recording {
             isPlaying = false;
             playTask = null;
             playListener.onFinished();
+        }
+
+        private void setPlayHead(int position) {
+            if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
+                if (track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
+                    track.stop();
+                    track.setPlaybackHeadPosition(position);
+                    track.play();
+                }
+                else {
+                    track.reloadStaticData();
+                    track.setPlaybackHeadPosition(position);
+                }
+            }
+            else {
+                Log.e(TAG, "Tried to move playhead while track was not ready!");
+            }
         }
     }
 

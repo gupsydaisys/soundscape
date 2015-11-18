@@ -5,98 +5,147 @@
     xmlns:android="http://schemas.android.com/apk/res/android">
 
     <LinearLayout
-        android:id="@+id/recordings_layout"
-        xmlns:android="http://schemas.android.com/apk/res/android"
-        xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+        android:id="@+id/list_layout"
         android:orientation="vertical"
-        android:layout_height="match_parent"
-        tools:context=".MainActivity"
-        android:background="@drawable/blue_black_texture">
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
 
         <LinearLayout
-            android:layout_width="match_parent"
-            android:orientation="horizontal"
-            android:layout_height="wrap_content"
-            android:background="@color/primaryDark">
+            android:id="@+id/recordings_layout"
+            xmlns:android="http://schemas.android.com/apk/res/android"
+            xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+            android:orientation="vertical"
+            android:layout_height="match_parent"
+            tools:context=".MainActivity"
+            android:background="@drawable/blue_black_texture">
 
-            <TextView
-                android:id="@+id/headerRecordings"
-                android:layout_width="wrap_content"
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:orientation="horizontal"
                 android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:textStyle="bold"
-                android:textSize="22sp"
-                android:textColor="@color/white"
-                android:padding="10dp"
-                android:text="@string/recording_header" />
+                android:background="@color/primaryDark">
+
+                <TextView
+                    android:id="@+id/headerRecordings"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:gravity="center_vertical"
+                    android:textStyle="bold"
+                    android:textSize="22sp"
+                    android:textColor="@color/white"
+                    android:padding="10dp"
+                    android:text="@string/recording_header" />
+
+                <View
+                    android:layout_width="0dip"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"/>
+
+            </LinearLayout>
+
+            <ListView
+                android:id="@+id/listRecordings"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@color/primaryLight"/>
 
             <View
-                android:layout_width="0dip"
-                android:layout_height="match_parent"
-                android:layout_weight="1"/>
+                android:layout_width="match_parent"
+                android:layout_height="1dip"
+                android:background="@color/primaryDark" />
 
         </LinearLayout>
 
-        <ListView
-            android:id="@+id/listRecordings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="@color/primaryLight"/>
-        
-        <View
+        <RelativeLayout
+            android:id="@+id/play_bar"
             android:layout_width="match_parent"
-            android:layout_height="1dip"
-            android:background="@color/primaryDark" />
+            android:layout_height="55dip"
+            android:background="@drawable/blue_black_texture"
+            android:layout_gravity="bottom">
 
+            <ProgressBar
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:id="@+id/progress_bar"
+                android:layout_width="match_parent"
+                android:layout_height="2dip"
+                android:progressDrawable="@drawable/audio_progress"/>
+
+            <ImageView
+                android:id="@+id/play_pause_bar"
+                android:layout_width="30dip"
+                android:layout_height="30dip"
+                android:layout_marginLeft="10dip"
+                android:layout_marginRight="10dip"
+                android:src="@drawable/play_button"
+                android:layout_centerVertical="true"
+                android:layout_alignParentStart="true" />
+
+            <LinearLayout
+                android:id="@+id/bar_info"
+                android:orientation="vertical"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:layout_toRightOf="@id/play_pause_bar">
+
+                <TextView android:id="@+id/play_text"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/white"
+                    android:textSize="20sp"
+                    android:paddingTop="2dip"
+                    android:paddingBottom="2dip"/>
+
+                <TextView android:id="@+id/play_length"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/primaryBackground"
+                    android:paddingBottom="2dip"/>
+
+            </LinearLayout>
+        </RelativeLayout>
     </LinearLayout>
 
     <RelativeLayout
-        android:id="@+id/music_bar"
+        android:id="@+id/play_layout"
         android:layout_width="match_parent"
-        android:layout_height="60dip"
-        android:background="@drawable/blue_black_texture"
-        android:layout_gravity="bottom">
-        
-        <ProgressBar
-            style="@android:style/Widget.ProgressBar.Horizontal"
-            android:id="@+id/progress_bar"
+        android:layout_height="match_parent"
+        android:background="@drawable/blue_black_texture" >
+
+        <RelativeLayout
+            android:id="@+id/back_button"
             android:layout_width="match_parent"
-            android:layout_height="2dip"
-            android:progressDrawable="@drawable/audio_progress"/>
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:layout_width="50dip"
+                android:layout_height="50dip"
+                android:background="@drawable/arrow_down_shadow"
+                android:layout_centerHorizontal="true"
+                android:layout_alignParentStart="true"/>
+        </RelativeLayout>
+
 
         <ImageView
-            android:id="@+id/play_pause"
-            android:layout_width="30dip"
-            android:layout_height="30dip"
+            android:id="@+id/play_pause_big"
+            android:layout_width="75dip"
+            android:layout_height="75dip"
             android:layout_marginLeft="10dip"
             android:layout_marginRight="10dip"
-            android:src="@drawable/play3"
-            android:layout_centerVertical="true"
-            android:layout_alignParentStart="true" />
+            android:src="@drawable/play_button"
+            android:layout_centerHorizontal="true"
+            android:layout_marginTop="150dip"
+            android:layout_below="@id/back_button"/>
 
-        <LinearLayout
-            android:id="@+id/bar_info"
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:gravity="center_vertical"
-            android:layout_toRightOf="@id/play_pause">
+        <SeekBar
+            android:id="@+id/seek_bar"
+            android:gravity="center"
+            android:layout_marginTop="30dip"
+            android:layout_width="500dip"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/play_pause_big"/>
 
-            <TextView android:id="@+id/play_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/white"
-                android:textSize="20sp"
-                android:paddingTop="2dip"/>
-
-            <TextView android:id="@+id/play_length"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:textColor="@color/primaryBackground"
-                android:paddingTop="2dip"
-                android:paddingBottom="2dip"/>
-
-        </LinearLayout>
     </RelativeLayout>
 
 

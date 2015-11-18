@@ -6,4 +6,13 @@
 
     <color name="pinkBackground">#FFAAAA</color>
     <color name="bgBrown">#D49A6A</color>
+
+    <color name="primaryLight">#4B698B</color>
+    <color name="primaryLightPressed">#123052</color>
+    <color name="primaryDark">#041D37</color>
+    <color name="primaryBackground">#A5B7CA</color>
+    <color name="secondaryLight">#D4966A</color>
+    <color name="secondaryDark">#552300</color>
+    <color name="error">#C1262A</color>
+    <color name="errorPress">#740003</color>
 </resources>
