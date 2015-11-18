@@ -6,13 +6,10 @@ import android.os.CountDownTimer;
 import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.view.BoxInsetLayout;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
 import android.widget.TextView;
 
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Locale;
 
 public class AwaitRecordActivity extends WearableActivity {
@@ -23,7 +20,6 @@ public class AwaitRecordActivity extends WearableActivity {
     private static final int INTERVAL = 1000;
     private static final int SECOND = 1000;
     private CountDownTimer touchTimer;
-    private int timeSinceLastTouch = 0;
     private int touches = 0;
 
     private static final SimpleDateFormat AMBIENT_DATE_FORMAT =
@@ -59,7 +55,7 @@ public class AwaitRecordActivity extends WearableActivity {
                     }
                 };
 
-                if (touches == 2) {
+                if (touches == 3) {
                     startActivity(recordIntent);
                 }
             }

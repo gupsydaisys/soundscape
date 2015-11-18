@@ -4,5 +4,6 @@
     <string name="title_activity_audio">AudioActivity</string>
     <string name="title_activity_test">TestActivity</string>
 
-    <string name="recording_header">Past Recordings</string>
+    <string name="recording_header">Recordings</string>
+    <string name="title_activity_rec_play">RecPlayActivity</string>
 </resources>

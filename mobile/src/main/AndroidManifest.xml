@@ -37,6 +37,15 @@
             </intent-filter>
         </service>
 
+        <activity
+            android:name=".RecPlayActivity"
+            android:label="@string/title_activity_rec_play"
+            android:parentActivityName=".AudioActivity"
+            android:theme="@style/AppTheme.NoActionBar" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="palsofpaulos.soundscape.AudioActivity" />
+        </activity>
     </application>
 
 </manifest>

@@ -1,55 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
     android:layout_width="match_parent"
-    android:layout_height="75dip"
-    android:background="@color/recViewBackground"
-    android:padding="4dip"
-    android:weightSum="1">
-
-    <ImageView
-        android:id="@+id/play_pause"
-        android:layout_width="50dip"
-        android:layout_height="40dip"
-        android:layout_gravity="center_vertical"
-        />
+    android:layout_height="60dip"
+    android:background="@color/primaryLight">
 
     <LinearLayout
+        android:id="@+id/rec_data"
         android:orientation="vertical"
-        android:layout_width="0dip"
+        android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/recViewBackground"
-        android:padding="4dip"
-        android:layout_weight=".8">
+        android:layout_toRightOf="@id/play_pause"
+        android:background="@drawable/audio_list_item"
+        android:paddingLeft="10dip">
 
         <TextView android:id="@+id/rec_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:textColor="@color/white"
+            android:textSize="20sp"
             android:paddingTop="2dip"
             android:paddingBottom="2dip"/>
 
-        <TextView android:id="@+id/recLength"
+        <TextView android:id="@+id/rec_length"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:paddingTop="2dip"
+            android:textColor="@color/primaryBackground"
             android:paddingBottom="2dip"/>
 
     </LinearLayout>
 
-    <TextView
+    <RelativeLayout
         android:id="@+id/delete_button"
-        android:background="@color/deleteRed"
-        android:text="Delete"
-        android:textSize="15sp"
-        android:layout_gravity="end"
-        android:gravity="center"
-        android:textColor="@color/white"
-        android:layout_weight=".2"
-        android:layout_width="0dip"
-        android:layout_height="match_parent" />
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@drawable/audio_delete_button"
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true">
 
-</LinearLayout>
+        <ImageView
+            android:background="@drawable/garbage"
+            android:backgroundTint="@color/charcoal"
+            android:text="Delete"
+            android:textSize="15sp"
+            android:layout_centerVertical="true"
+            android:layout_gravity="end"
+            android:gravity="center"
+            android:textColor="@color/white"
+            android:layout_width="45dip"
+            android:layout_height="45dip" />
+    </RelativeLayout>
+
+</RelativeLayout>

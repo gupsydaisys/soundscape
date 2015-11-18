@@ -76,14 +76,6 @@ public class MobileMessengerService extends WearableListenerService {
         }
     }
 
-    @Override
-    public void onChannelClosed(Channel channel, int closeReason, int appSpecificErrorCode) {
-        if (channel.getPath().equals(WearAPIManager.RECORD_CHANNEL)) {
-            // do nothing
-        }
-    }
-
-
     private void initializeGoogleApiClient() {
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)  // used for data layer API

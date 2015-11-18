@@ -8,5 +8,16 @@
     <color name="recViewBackground">#FFE3CC</color>
     <color name="textBackground">#D49A6A</color>
     <color name="white">#FFFFFF</color>
-    <color name="deleteRed">#AA3939</color>
+    <color name="delete_red">#AA3939</color>
+
+    <color name="primaryLight">#4B698B</color>
+    <color name="primaryLightPressed">#123052</color>
+    <color name="primaryDark">#041D37</color>
+    <color name="primaryBackground">#A5B7CA</color>
+    <color name="secondaryLight">#D4966A</color>
+    <color name="secondaryDark">#552300</color>
+    <color name="error">#C1262A</color>
+    <color name="errorPress">#740003</color>
+
+    <color name="charcoal">#323232</color>
 </resources>

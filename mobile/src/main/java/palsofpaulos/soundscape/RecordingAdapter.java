@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -15,9 +16,9 @@ import palsofpaulos.soundscape.common.Recording.*;
 
 
 public class RecordingAdapter extends ArrayAdapter<Recording> {
-    Context context;
-    int layoutResourceId;
-    ArrayList<Recording> recs;
+    private Context context;
+    private int layoutResourceId;
+    private ArrayList<Recording> recs;
 
     public RecordingAdapter(Context context, int layoutResourceId, ArrayList<Recording> data) {
         super(context, layoutResourceId, data);
@@ -36,10 +37,9 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
             row = inflater.inflate(layoutResourceId, parent, false);
 
             holder = new RecHolder();
-            holder.playButton = (ImageView) row.findViewById(R.id.play_pause);
-            holder.delButton = (TextView) row.findViewById(R.id.delete_button);
+            holder.delButton = (RelativeLayout) row.findViewById(R.id.delete_button);
             holder.recText = (TextView) row.findViewById(R.id.rec_text);
-            holder.recLength = (TextView) row.findViewById(R.id.recLength);
+            holder.recLength = (TextView) row.findViewById(R.id.rec_length);
 
             row.setTag(holder);
         } else {
@@ -49,38 +49,11 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
         final Recording rec = recs.get(position);
         holder.recText.setText(String.valueOf(rec.getId()));
         holder.recLength.setText(rec.lengthString());
-        holder.playButton.setImageResource(R.drawable.play2);
-
-        final PostPlayListener postPlayListener = new PostPlayListener() {
-            @Override
-            public void onFinished() {
-                holder.playButton.setImageResource(R.drawable.play2);
-                holder.playButton.invalidate();
-            }
-        };
-        holder.playButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if (!rec.isPlaying()) {
-                    rec.play(postPlayListener);
-                    holder.playButton.setImageResource(R.drawable.pause2);
-                    holder.playButton.invalidate();
-                }
-                else {
-                    holder.playButton.setImageResource(R.drawable.play2);
-                    holder.playButton.invalidate();
-                    rec.pause();
-                }
-            }
-        });
 
         holder.delButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (rec.isPlaying()) {
-                    rec.stop();
-                }
-                rec.getFile().delete();
+                rec.delete();
                 recs.remove(position);
                 notifyDataSetChanged();
             }
@@ -90,8 +63,7 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
     }
 
     private static class RecHolder {
-        ImageView playButton;
-        TextView delButton;
+        RelativeLayout delButton;
         TextView recText;
         TextView recLength;
     }

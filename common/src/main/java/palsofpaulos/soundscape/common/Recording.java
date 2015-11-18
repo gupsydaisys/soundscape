@@ -1,12 +1,10 @@
 package palsofpaulos.soundscape.common;
 
-import android.media.AudioAttributes;
 import android.media.AudioManager;
+import android.media.AudioTimestamp;
 import android.media.AudioTrack;
 import android.os.AsyncTask;
-import android.provider.MediaStore;
 import android.util.Log;
-import android.widget.TextView;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -22,6 +20,7 @@ import java.io.OutputStream;
 public class Recording {
 
     private static final String TAG = "Recording Object";
+    private static final int NOTIFICATION_PERIOD = 500;
     private static int lastId = 0;
 
     private String filePath;
@@ -34,6 +33,9 @@ public class Recording {
 
     private PlayAudioTask playTask;
     private boolean isPlaying;
+
+    private boolean isDeleted = false;
+    private boolean isStopped = false;
 
     public Recording(String filePath) {
         this.filePath = filePath;
@@ -92,9 +94,9 @@ public class Recording {
 
     public int getId() { return id; }
 
-    public boolean isPlaying() {
-        return this.isPlaying;
-    }
+    public boolean isPlaying() { return this.isPlaying; }
+
+    public boolean isDeleted() { return this.isDeleted; }
 
     public PlayAudioTask getPlayTask() { return playTask; }
 
@@ -103,12 +105,18 @@ public class Recording {
         return (file.length() / RecordingManager.SAMPLERATE);
     }
 
+    public int frameLength() {
+        return (int) (file.length() / 2);
+    }
+
     public String lengthString() {
         long len = this.length();
         return String.format("%d:%d", len / 60, len % 60);
     }
 
-
+    public static void setLastId(int lastId) {
+        Recording.lastId = lastId;
+    }
 
 
 
@@ -119,6 +127,9 @@ public class Recording {
     /* starts recording if it hasn't started
      * resumes playback if it was was paused */
     public void play() {
+        if (isDeleted) {
+            Log.e(TAG, "attempted to play deleted recording!");
+        }
         if (playTask != null) {
             playTask.play();
         }
@@ -131,9 +142,11 @@ public class Recording {
 
     /* Play the recording and specify a listener with an
      * onFinished() callback method to call when the
-     * recording has finished playing
-     */
-    public void play(PostPlayListener listener) {
+     * recording has finished playing */
+    public void play(PlayListener listener) {
+        if (isDeleted) {
+            Log.e(TAG, "attempted to play deleted recording!");
+        }
         if (playTask != null) {
             playTask.play();
         }
@@ -142,13 +155,6 @@ public class Recording {
             playTask.execute();
         }
     }
-
-    public void restart() {
-        stop();
-        play();
-    }
-
-
 
     public void pause() {
         if (playTask != null) {
@@ -159,8 +165,13 @@ public class Recording {
     public void stop() {
         if (playTask != null) {
             playTask.stop();
-            playTask = null;
         }
+    }
+
+    public void delete() {
+        isDeleted = true;
+        stop();
+        file.delete();
     }
 
 
@@ -173,12 +184,16 @@ public class Recording {
 
     private class PlayAudioTask extends AsyncTask<Void, Void, Void> {
 
-        private final PostPlayListener postPlayListener;
+        private final PlayListener playListener;
 
         private AudioTrack track;
 
         public PlayAudioTask() {
-            this.postPlayListener = new PostPlayListener() {
+            this.playListener = new PlayListener() {
+                @Override
+                public void onUpdate(int progress) {
+                    // do nothing
+                }
                 @Override
                 public void onFinished() {
                     // do nothing
@@ -186,15 +201,19 @@ public class Recording {
             };
         }
 
-        public PlayAudioTask(PostPlayListener listener) {
+        public PlayAudioTask(PlayListener listener) {
             // The listener reference is passed in through the constructor
-            this.postPlayListener = listener;
+            this.playListener = listener;
         }
 
         @Override
         protected Void doInBackground(Void... params) {
             Log.d(TAG, "Attempting to play audio at path " + filePath);
             isPlaying = true;
+
+            if (file.length() == 0) {
+                cancel(true);
+            }
 
             // Read the file
             byte[] byteData = new byte[(int) file.length()];
@@ -214,11 +233,15 @@ public class Recording {
 
                 // Write the byte array to the track
                 track.write(byteData, 0, byteData.length);
-                track.play();
-                track.setNotificationMarkerPosition(byteData.length/2);
+                track.setNotificationMarkerPosition(byteData.length / 2);
+                track.setPositionNotificationPeriod(NOTIFICATION_PERIOD);
                 track.setPlaybackPositionUpdateListener(new AudioTrack.OnPlaybackPositionUpdateListener() {
                     @Override
-                    public void onPeriodicNotification(AudioTrack track) { }
+                    public void onPeriodicNotification(AudioTrack track) {
+                        if (track.getState() == AudioTrack.STATE_INITIALIZED) {
+                            playListener.onUpdate(track.getPlaybackHeadPosition());
+                        }
+                    }
                     @Override
                     public void onMarkerReached(AudioTrack track) {
                         Log.d(TAG, "stopping audio");
@@ -226,25 +249,28 @@ public class Recording {
                         track.release();
                         isPlaying = false;
                         playTask = null;
-                        postPlayListener.onFinished();
+                        playListener.onFinished();
                     }
                 });
+                track.play();
             }
 
             return null;
         }
 
-
+        @Override
+        protected void onProgressUpdate(Void... progress) {
+        }
 
         @Override
         protected void onCancelled(Void result) {
-            if (track != null) {
+            if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
                 track.stop();
                 track.release();
             }
             isPlaying = false;
             playTask = null;
-            postPlayListener.onFinished();
+            playListener.onFinished();
         }
 
 
@@ -273,16 +299,19 @@ public class Recording {
         private void stop() {
             Log.d(TAG, "Stopping recording");
             if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
-                isPlaying = false;
-                playTask = null;
                 track.stop();
                 track.release();
-                cancel(true);
+                track = null;
             }
+            isPlaying = false;
+            playTask = null;
+            playListener.onFinished();
         }
     }
 
-    public interface PostPlayListener {
+    public interface PlayListener {
+
+        void onUpdate(final int progress);
         void onFinished();
     }
 
