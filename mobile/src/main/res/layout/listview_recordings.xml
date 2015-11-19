@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/h_scroll_view_container"
     android:layout_width="match_parent"
-    android:layout_height="60dip"
-    android:orientation="horizontal">
+    android:layout_height="60dip">
 
     <LinearLayout
         android:id="@+id/rec_data"
@@ -35,7 +35,8 @@
         android:id="@+id/delete_button"
         android:layout_width="50dip"
         android:layout_height="match_parent"
-        android:background="@drawable/audio_delete_button">
+        android:background="@drawable/audio_delete_button"
+        android:layout_alignParentEnd="true">
 
         <ImageView
             android:background="@drawable/garbage"
@@ -50,5 +51,4 @@
             android:layout_width="30dip"
             android:layout_height="30dip" />
     </RelativeLayout>
-
-</LinearLayout>
+</RelativeLayout>

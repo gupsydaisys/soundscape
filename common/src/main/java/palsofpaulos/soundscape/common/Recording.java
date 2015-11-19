@@ -119,9 +119,9 @@ public class Recording {
         int min = (len % 3600) / 60;
         int sec = len % 60;
         if (hrs > 0) {
-            return String.format("%d:%d:%d", hrs, min, sec);
+            return String.format("%d:%d:%02d", hrs, min, sec);
         }
-        return String.format("%d:%d", min, sec);
+        return String.format("%d:%02d", min, sec);
     }
     // limits the file to MAX_LENGTH
     private void truncateFile() {

@@ -2,12 +2,11 @@ package palsofpaulos.soundscape;
 
 import android.media.AudioRecord;
 import android.os.Bundle;
-import android.app.Activity;
 import android.support.v4.content.ContextCompat;
+import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.TextView;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.Channel;
@@ -22,7 +21,7 @@ import java.util.concurrent.TimeUnit;
 import palsofpaulos.soundscape.common.RecordingManager;
 import palsofpaulos.soundscape.common.WearAPIManager;
 
-public class RecordActivity extends Activity  {
+public class RecordActivity extends WearableActivity {
 
     private static final String TAG = "Record Activity";
 
@@ -34,7 +33,6 @@ public class RecordActivity extends Activity  {
     private GoogleApiClient mApiClient;
     private Channel mApiChannel;
     private String mApiNodeId;
-    private String nodeId;
 
     /* Recording Parameters */
     private int bufferSize = AudioRecord.getMinBufferSize(RecordingManager.SAMPLERATE, RecordingManager.CHANNELS_IN, RecordingManager.ENCODING);
@@ -42,15 +40,14 @@ public class RecordActivity extends Activity  {
     private AudioRecord recorder = null;
     private Thread recordingThread = null;
     private boolean isRecording = false;
-    private String audioPath;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_record);
+        setAmbientEnabled();
 
-        audioPath = this.getFilesDir().getPath() + "/8k16bitMono.pcm";
-
+        // recording is started once the wear api client connects
         initializeGoogleApiClient();
     }
 
@@ -80,11 +77,6 @@ public class RecordActivity extends Activity  {
         });
     }
 
-    private void hideConnectingText() {
-        TextView connectingText = (TextView) findViewById(R.id.wear_connecting_text);
-        connectingText.setVisibility(View.GONE);
-    }
-
     private void initializeGoogleApiClient() {
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)  // used for data layer API
@@ -104,7 +96,6 @@ public class RecordActivity extends Activity  {
 
                 RecordActivity.this.runOnUiThread(new Runnable() {
                     public void run() {
-                        hideConnectingText();
                         initializeButtons();
                         toggleRecording();
                     }
@@ -125,10 +116,10 @@ public class RecordActivity extends Activity  {
     private void toggleRecording() {
         if (!isRecording) {
             startRecording();
-            recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_on2));
+            recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_on_3));
         } else {
+            recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_off_3));
             stopRecording();
-            recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_off2));
             finish();
         }
     }

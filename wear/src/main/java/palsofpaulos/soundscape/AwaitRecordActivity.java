@@ -78,22 +78,20 @@ public class AwaitRecordActivity extends WearableActivity {
     @Override
     public void onUpdateAmbient() {
         super.onUpdateAmbient();
-        updateDisplay();
+        //updateDisplay();
     }
 
     @Override
     public void onExitAmbient() {
-        updateDisplay();
+        //updateDisplay();
         super.onExitAmbient();
     }
 
     private void updateDisplay() {
         if (isAmbient()) {
-            mContainerView.setBackgroundColor(getResources().getColor(android.R.color.black));
-            mTextView.setTextColor(getResources().getColor(android.R.color.white));
+            mContainerView.setBackground(getResources().getDrawable(android.R.color.black));
         } else {
-            mContainerView.setBackground(null);
-            mTextView.setTextColor(getResources().getColor(android.R.color.black));
+            mContainerView.setBackground(getResources().getDrawable(R.drawable.blue_black_texture));
         }
     }
 }

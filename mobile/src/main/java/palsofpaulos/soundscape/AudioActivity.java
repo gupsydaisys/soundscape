@@ -2,17 +2,14 @@ package palsofpaulos.soundscape;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.Animation;
-import android.view.animation.Transformation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ImageView;
@@ -21,7 +18,6 @@ import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
-import android.view.ViewGroup.LayoutParams;
 
 
 import java.util.ArrayList;
@@ -43,7 +39,7 @@ public class AudioActivity extends AppCompatActivity {
     private View barLayout;
     private int barLayoutInitHeight;
     private boolean playBarExpanded = false;
-    private boolean keepPlayBarOpen = true;
+    private boolean preventPlayBarClose = true;
     private View playLayout;
 
     private ImageView playButtonBar;
@@ -128,13 +124,11 @@ public class AudioActivity extends AppCompatActivity {
         playListener = new Recording.PlayListener() {
             @Override
             public void onUpdate(final int progress) {
-                progressBar.setProgress(oldProgress + progress);
-                seekBar.setProgress(oldProgress + progress);
+                setProgressBars(oldProgress + progress);
             }
             @Override
             public void onFinished() {
-                playButtonBar.setImageResource(R.drawable.play_button);
-                playButtonBig.setImageResource(R.drawable.play_button);
+               setPlayButtons();
                 oldProgress = 0;
                 if (playLayout.getVisibility() != View.VISIBLE) {
                     closePlayBar();
@@ -157,11 +151,9 @@ public class AudioActivity extends AppCompatActivity {
                 }
                 if (!playingRec.isPlaying()) {
                     playingRec.play(playListener);
-                    playButtonBar.setImageResource(R.drawable.pause_button);
-                    playButtonBig.setImageResource(R.drawable.pause_button);
+                    setPauseButtons();
                 } else {
-                    playButtonBar.setImageResource(R.drawable.play_button);
-                    playButtonBig.setImageResource(R.drawable.play_button);
+                    setPlayButtons();
                     playingRec.pause();
                 }
             }
@@ -206,9 +198,9 @@ public class AudioActivity extends AppCompatActivity {
 
     public void playRecAtPosition(int position) {
         if (playingRec != null) {
-            keepPlayBarOpen = true;
+            preventPlayBarClose = true;
             playingRec.stop();
-            keepPlayBarOpen = false;
+            preventPlayBarClose = false;
         }
         oldProgress = 0;
 
@@ -217,27 +209,12 @@ public class AudioActivity extends AppCompatActivity {
         rec.play(playListener);
 
         // Setup and display audio play bar
-        playButtonBar.setImageResource(R.drawable.pause_button);
-        playButtonBig.setImageResource(R.drawable.pause_button);
+        setPauseButtons();
         playText.setText(String.valueOf(rec.getId()));
         playLength.setText(rec.lengthString());
-        progressBar.setMax(playingRec.frameLength());
-        progressBar.setProgress(0);
-        seekBar.setMax(playingRec.frameLength());
-        seekBar.setProgress(0);
+        setProgressBarsMax(playingRec.frameLength());
+        setProgressBars(0);
         expandPlayBar();
-    }
-
-    public View getViewByPosition(int pos, ListView listView) {
-        final int firstListItemPosition = listView.getFirstVisiblePosition();
-        final int lastListItemPosition = firstListItemPosition + listView.getChildCount() - 1;
-
-        if (pos < firstListItemPosition || pos > lastListItemPosition ) {
-            return listView.getAdapter().getView(pos, null, listView);
-        } else {
-            final int childIndex = pos - firstListItemPosition;
-            return listView.getChildAt(childIndex);
-        }
     }
 
 
@@ -277,6 +254,7 @@ public class AudioActivity extends AppCompatActivity {
         editor.commit();
     }
 
+    // call after changes recordings data to update the listview
     private void updateRecsView() {
         recsView.destroyDrawingCache();
         RecordingAdapter ra = (RecordingAdapter) recsView.getAdapter();
@@ -291,6 +269,26 @@ public class AudioActivity extends AppCompatActivity {
 
     /* Animation Methods */
 
+    public void setPlayButtons() {
+        playButtonBar.setImageResource(R.drawable.play_button);
+        playButtonBig.setImageResource(R.drawable.play_button);
+    }
+
+    public void setPauseButtons() {
+        playButtonBar.setImageResource(R.drawable.pause_button);
+        playButtonBig.setImageResource(R.drawable.pause_button);
+    }
+
+    public void setProgressBars(int progress) {
+        progressBar.setProgress(progress);
+        seekBar.setProgress(progress);
+    }
+
+    public void setProgressBarsMax(int max) {
+        progressBar.setMax(max);
+        seekBar.setMax(max);
+    }
+
     public void expandPlayBar() {
         if (playBarExpanded) {
             return;
@@ -302,7 +300,7 @@ public class AudioActivity extends AppCompatActivity {
     }
 
     public void closePlayBar() {
-        if (!playBarExpanded || keepPlayBarOpen) {
+        if (!playBarExpanded || preventPlayBarClose) {
             return;
         }
         HeightAnimation closeAnim = new HeightAnimation(recsLayout, recsLayoutInitHeight - barLayoutInitHeight, recsLayoutInitHeight, MUSIC_BAR_ANIMATION_DURATION);
@@ -326,7 +324,7 @@ public class AudioActivity extends AppCompatActivity {
     }
 
     public void expandPlayLayout() {
-        keepPlayBarOpen = true;
+        preventPlayBarClose = true;
         playLayout.setVisibility(View.VISIBLE);
 
         listLayoutInitHeight = listLayout.getHeight();
@@ -362,7 +360,7 @@ public class AudioActivity extends AppCompatActivity {
             @Override
             public void onAnimationEnd(Animation animation) {
                 playLayout.setVisibility(View.GONE);
-                keepPlayBarOpen = false;
+                preventPlayBarClose = false;
             }
 
             @Override
