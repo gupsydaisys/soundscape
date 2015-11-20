@@ -61,7 +61,12 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
         }
 
         final Recording rec = recs.get(position);
-        holder.recText.setText(String.valueOf(rec.getId()));
+        if (rec.getName() == "") {
+            holder.recText.setText(String.valueOf(rec.getId()));
+        }
+        else {
+            holder.recText.setText(rec.getName());
+        }
         holder.recLength.setText(rec.lengthString());
 
         /*

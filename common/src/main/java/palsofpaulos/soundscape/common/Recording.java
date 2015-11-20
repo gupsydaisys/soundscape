@@ -101,6 +101,8 @@ public class Recording {
 
     public int getId() { return this.id; }
 
+    public String getName() { return this.name; }
+
     public boolean isPlaying() { return this.isPlaying; }
 
     public boolean isDeleted() { return this.isDeleted; }
@@ -143,6 +145,8 @@ public class Recording {
     public static void setLastId(int lastId) {
         Recording.lastId = lastId;
     }
+
+    public void setName(String name) { this.name = name; }
 
     public void setPlayHead(int position) {
         if (playTask != null && playTask.track != null) {

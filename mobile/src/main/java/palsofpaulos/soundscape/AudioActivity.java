@@ -5,6 +5,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.location.Address;
+import android.location.Geocoder;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -35,7 +37,11 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.RecordingManager;
@@ -50,6 +56,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private static final int MAP_ANIMATION_DURATION = 200;
 
     private GoogleMap map;
+    private HashMap<Marker, Integer> markerIdHashMap;
 
     private View listLayout;
     private View recsLayout;
@@ -135,18 +142,17 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap map) {
         this.map = map;
+        markerIdHashMap = new HashMap<>();
         for (int ii = 0; ii < recs.size(); ii++) {
             Recording rec = recs.get(ii);
             LatLng latLng = new LatLng(rec.getLocation().getLatitude(), rec.getLocation().getLongitude());
-            map.addMarker(new MarkerOptions()
-                    .position(latLng)
-                    .title(String.valueOf(ii)));
+            Marker recMarker = map.addMarker(new MarkerOptions().position(latLng).title(rec.getName()));
+            markerIdHashMap.put(recMarker, ii);
         }
         map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                int recId = Integer.valueOf(marker.getTitle());
-                playRecAtPosition(recId);
+                playRecAtPosition(markerIdHashMap.get(marker));
                 return false;
             }
         });
@@ -163,9 +169,26 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
             final String filePath = intent.getStringExtra(WearAPIManager.REC_FILEPATH);
             final Location recLoc = new Location("");
-            recLoc.setLatitude(intent.getDoubleExtra(WearAPIManager.REC_LAT, 0));
-            recLoc.setLongitude(intent.getDoubleExtra(WearAPIManager.REC_LNG, 0));
+            double latitude = intent.getDoubleExtra(WearAPIManager.REC_LAT, 0);
+            double longitude = intent.getDoubleExtra(WearAPIManager.REC_LNG, 0);
+            recLoc.setLatitude(latitude);
+            recLoc.setLongitude(longitude);
+
+            Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
+            String locName = "";
+            try {
+                List<Address> listAddresses = geocoder.getFromLocation(latitude, longitude, 1);
+                if(listAddresses != null && listAddresses.size() > 0){
+                    locName = listAddresses.get(0).getAddressLine(0);
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
             Recording newRec = new Recording(filePath, recLoc);
+            newRec.setName(locName);
+
+
             recs.add(0, newRec);
             updateRecsView();
         }
