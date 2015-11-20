@@ -2,6 +2,7 @@ package palsofpaulos.soundscape;
 
 import android.app.Notification;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
@@ -21,10 +22,14 @@ import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
 import com.google.android.gms.common.api.ResultCallback;
 import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.location.places.PlaceLikelihood;
+import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
+import com.google.android.gms.location.places.Places;
 import com.google.android.gms.wearable.Channel;
 import com.google.android.gms.wearable.MessageEvent;
 import com.google.android.gms.wearable.Wearable;
@@ -43,6 +48,7 @@ public class MobileMessengerService extends WearableListenerService implements
     private static final String TAG = "Mobile Listener";
 
     private GoogleApiClient mApiClient;
+    private String placeName = "";
 
     @Override
     public void onCreate() {
@@ -115,21 +121,43 @@ public class MobileMessengerService extends WearableListenerService implements
     private void initializeGoogleApiClient() {
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(LocationServices.API)
+                .addApi(Places.GEO_DATA_API)
+                .addApi(Places.PLACE_DETECTION_API)
                 .addApi(Wearable.API)  // used for data layer API
                 .addConnectionCallbacks(this)
                 .build();
     }
 
     private void sendRecordingToAudioActivity(Recording recording) {
+
         Intent audioIntent = new Intent(WearAPIManager.AUDIO_INTENT);
         audioIntent.putExtra(WearAPIManager.REC_FILEPATH, recording.getFilePath());
         audioIntent.putExtra(WearAPIManager.REC_LAT, WearAPIManager.currentLocation.getLatitude());
         audioIntent.putExtra(WearAPIManager.REC_LNG, WearAPIManager.currentLocation.getLongitude());
+        audioIntent.putExtra(WearAPIManager.REC_PLACE, recording.getName());
         sendBroadcast(audioIntent);
     }
 
     private void getRecordingFromChannel(final Channel channel) {
         final String rootPath = this.getFilesDir().getPath();
+
+        PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
+                .getCurrentPlace(mApiClient, null);
+        result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
+            @Override
+            public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
+                String mostLikelyPlace = "";
+                double mostLikelyValue = 0;
+                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                    if (placeLikelihood.getLikelihood() > mostLikelyValue) {
+                        mostLikelyPlace = (String) placeLikelihood.getPlace().getName();
+                        mostLikelyValue = placeLikelihood.getLikelihood();
+                    }
+                }
+                likelyPlaces.release();
+                placeName = mostLikelyPlace;
+            }
+        });
 
         Thread recordThread = new Thread(new Runnable() {
             public void run() {
@@ -140,6 +168,7 @@ public class MobileMessengerService extends WearableListenerService implements
                 Channel.GetInputStreamResult getInputStreamResult = channel.getInputStream(mApiClient).await();
                 InputStream inputStream = getInputStreamResult.getInputStream();
                 Recording recording = new Recording(inputStream, rootPath);
+                recording.setName(placeName);
                 sendRecordingToAudioActivity(recording);
             }
         }, "RecordFile Thread");

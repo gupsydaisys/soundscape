@@ -28,6 +28,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
+import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -174,19 +175,8 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             recLoc.setLatitude(latitude);
             recLoc.setLongitude(longitude);
 
-            Geocoder geocoder = new Geocoder(getApplicationContext(), Locale.getDefault());
-            String locName = "";
-            try {
-                List<Address> listAddresses = geocoder.getFromLocation(latitude, longitude, 1);
-                if(listAddresses != null && listAddresses.size() > 0){
-                    locName = listAddresses.get(0).getAddressLine(0);
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-
             Recording newRec = new Recording(filePath, recLoc);
-            newRec.setName(locName);
+            newRec.setName(intent.getStringExtra(WearAPIManager.REC_PLACE));
 
 
             recs.add(0, newRec);

@@ -16,6 +16,7 @@ public class WearAPIManager {
     public static final String REC_FILEPATH = "filepath";
     public static final String REC_LAT = "lat";
     public static final String REC_LNG = "lng";
+    public static final String REC_PLACE = "place";
 
     public static final int LOCATION_UPDATE_INTERVAL = 60000;
     public static final int LOCATION_UPDATE_FASTEST = 30000;
