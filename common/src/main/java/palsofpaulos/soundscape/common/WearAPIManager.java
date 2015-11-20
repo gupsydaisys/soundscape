@@ -18,8 +18,8 @@ public class WearAPIManager {
     public static final String REC_LNG = "lng";
     public static final String REC_PLACE = "place";
 
-    public static final int LOCATION_UPDATE_INTERVAL = 60000;
-    public static final int LOCATION_UPDATE_FASTEST = 30000;
+    public static final int LOCATION_UPDATE_INTERVAL = 300000;
+    public static final int LOCATION_UPDATE_FASTEST = 60000;
 
     public static Location currentLocation = new Location("");
 

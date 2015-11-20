@@ -59,6 +59,8 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private GoogleMap map;
     private HashMap<Marker, Integer> markerIdHashMap;
 
+    Intent mobileMessengerIntent;
+
     private View listLayout;
     private View recsLayout;
     private View recsListLayout;
@@ -73,7 +75,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private boolean playBarExpanded = false;
     private boolean preventPlayBarClose = true;
-
 
     private ImageButton mapsButton;
     private ImageButton listButton;
@@ -98,7 +99,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_audio);
 
         // start MobileMessengerService to update location
-        Intent mobileMessengerIntent = new Intent(this, MobileMessengerService.class);
+        mobileMessengerIntent = new Intent(this, MobileMessengerService.class);
         startService(mobileMessengerIntent);
 
         // get recordings from saved preferences and populate listview
@@ -161,6 +162,8 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(cameraLoc, 10);
         map.moveCamera(cameraUpdate);
+
+        stopService(mobileMessengerIntent);
     }
 
 
