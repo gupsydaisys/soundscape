@@ -326,12 +326,13 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         recs.clear();
         SharedPreferences prefs = getSharedPreferences(RecordingManager.SAVED_RECS, MODE_PRIVATE);
         for (int ii = 0; ; ii++){
-            String recPath = prefs.getString(String.valueOf(ii) + "file", "");
+            String recPath = prefs.getString(ii + "file", "");
             Location recLoc = new Location("");
-            recLoc.setLatitude(Double.longBitsToDouble(prefs.getLong(String.valueOf(ii) + "lat", 0)));
-            recLoc.setLongitude(Double.longBitsToDouble(prefs.getLong(String.valueOf(ii) + "lng", 0)));
+            recLoc.setLatitude(Double.longBitsToDouble(prefs.getLong(ii + "lat", 0)));
+            recLoc.setLongitude(Double.longBitsToDouble(prefs.getLong(ii + "lng", 0)));
             if (!recPath.equals("")){
                 Recording addRec = new Recording(recPath, recLoc);
+                addRec.setName(prefs.getString(ii + "place", ""));
                 recs.add(addRec);
             } else {
                 Log.d("Recordings Loaded:", String.valueOf(ii));
@@ -349,9 +350,10 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         editor.clear();
         for (int ii = 0; ii < recs.size(); ii++) {
             Recording rec = recs.get(ii);
-            editor.putString(String.valueOf(ii) + "file", rec.getFilePath());
-            editor.putLong(String.valueOf(ii) + "lat", Double.doubleToRawLongBits(rec.getLocation().getLatitude()));
-            editor.putLong(String.valueOf(ii) + "lng", Double.doubleToLongBits(rec.getLocation().getLongitude()));
+            editor.putString(ii + "file", rec.getFilePath());
+            editor.putLong(ii + "lat", Double.doubleToRawLongBits(rec.getLocation().getLatitude()));
+            editor.putLong(ii + "lng", Double.doubleToLongBits(rec.getLocation().getLongitude()));
+            editor.putString(ii + "place", rec.getName());
         }
         editor.commit();
     }
