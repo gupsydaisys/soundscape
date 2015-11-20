@@ -438,7 +438,13 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         mapLayout.setVisibility(View.VISIBLE);
         recsListLayoutInitHeight = recsListLayout.getHeight();
 
-        LatLng cameraLoc = new LatLng(WearAPIManager.currentLocation.getLatitude(), WearAPIManager.currentLocation.getLongitude());
+        LatLng cameraLoc;
+        if (playingRec != null) {
+            cameraLoc = new LatLng(playingRec.getLocation().getLatitude(), playingRec.getLocation().getLongitude());
+        }
+        else {
+            cameraLoc = new LatLng(WearAPIManager.currentLocation.getLatitude(), WearAPIManager.currentLocation.getLongitude());
+        }
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(cameraLoc, 10);
         map.moveCamera(cameraUpdate);
 

@@ -49,9 +49,10 @@
 
                     <ImageButton
                         android:id="@+id/maps_button"
-                        android:layout_width="40dip"
+                        android:layout_width="50dip"
                         android:layout_height="match_parent"
-                        android:src="@drawable/maps_ic"/>
+                        android:src="@drawable/maps_ic"
+                        android:scaleType="fitCenter"/>
 
                 </LinearLayout>
 
