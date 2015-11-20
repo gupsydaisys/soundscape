@@ -4,6 +4,8 @@ package palsofpaulos.soundscape.common;
  * Google Wear API Layer.
  */
 
+import android.location.Location;
+
 public class WearAPIManager {
 
     public static final String RECORD_ACTIVITY = "/record_activity";
@@ -11,6 +13,14 @@ public class WearAPIManager {
     public static final String RECORD_CHANNEL = "/record_channel";
 
     public static final String AUDIO_INTENT = "/audio_intent";
+    public static final String REC_FILEPATH = "filepath";
+    public static final String REC_LAT = "lat";
+    public static final String REC_LNG = "lng";
+
+    public static final int LOCATION_UPDATE_INTERVAL = 60000;
+    public static final int LOCATION_UPDATE_FASTEST = 30000;
+
+    public static Location currentLocation = new Location("");
 
     private WearAPIManager() {
 

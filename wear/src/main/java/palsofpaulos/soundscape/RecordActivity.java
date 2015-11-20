@@ -55,6 +55,7 @@ public class RecordActivity extends WearableActivity {
     protected  void onDestroy() {
         super.onDestroy();
 
+        stopRecording();
         if (mApiClient.isConnected()) {
             mApiClient.disconnect();
         }

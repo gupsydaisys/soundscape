@@ -4,11 +4,14 @@ import android.app.Notification;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.location.Location;
+import android.location.LocationListener;
 import android.media.AudioFormat;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.renderscript.ScriptGroup;
 import android.util.Log;
@@ -16,30 +19,28 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Toast;
 
+import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
+import com.google.android.gms.location.LocationRequest;
+import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.wearable.Channel;
-import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
-import com.google.android.gms.wearable.Node;
-import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.WearAPIManager;
 
-public class MobileMessengerService extends WearableListenerService {
+public class MobileMessengerService extends WearableListenerService implements
+        GoogleApiClient.ConnectionCallbacks,
+        GoogleApiClient.OnConnectionFailedListener,
+        com.google.android.gms.location.LocationListener {
 
     private static final String TAG = "Mobile Listener";
-    private static final int RECORD_SERVICE_ID = 420;
 
     private GoogleApiClient mApiClient;
 
@@ -76,15 +77,54 @@ public class MobileMessengerService extends WearableListenerService {
         }
     }
 
+    @Override
+    public void onConnected(Bundle bundle) {
+
+        LocationRequest locationRequest = LocationRequest.create()
+                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
+                .setInterval(WearAPIManager.LOCATION_UPDATE_INTERVAL)
+                .setFastestInterval(WearAPIManager.LOCATION_UPDATE_FASTEST);
+
+        LocationServices.FusedLocationApi
+                .requestLocationUpdates(mApiClient, locationRequest, this)
+                .setResultCallback(new ResultCallback<Status>() {
+                    @Override
+                    public void onResult(Status status) {
+                        if (status.getStatus().isSuccess()) {
+                            Log.d(TAG, "Successfully requested location");
+                        } else {
+                            Log.e(TAG, status.getStatusMessage());
+                        }
+                    }
+                });
+    }
+
+    @Override
+    public void onLocationChanged(Location location) {
+        Log.d(TAG, "Location updated!" + location.toString());
+        WearAPIManager.currentLocation = location;
+    }
+
+    @Override
+    public void onConnectionSuspended(int i) {}
+
+    @Override
+    public void onConnectionFailed(ConnectionResult connResult) {}
+
+
     private void initializeGoogleApiClient() {
         mApiClient = new GoogleApiClient.Builder(this)
+                .addApi(LocationServices.API)
                 .addApi(Wearable.API)  // used for data layer API
+                .addConnectionCallbacks(this)
                 .build();
     }
 
     private void sendRecordingToAudioActivity(Recording recording) {
         Intent audioIntent = new Intent(WearAPIManager.AUDIO_INTENT);
-        audioIntent.putExtra("filePath", recording.getFilePath());
+        audioIntent.putExtra(WearAPIManager.REC_FILEPATH, recording.getFilePath());
+        audioIntent.putExtra(WearAPIManager.REC_LAT, WearAPIManager.currentLocation.getLatitude());
+        audioIntent.putExtra(WearAPIManager.REC_LNG, WearAPIManager.currentLocation.getLongitude());
         sendBroadcast(audioIntent);
     }
 

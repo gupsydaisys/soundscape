@@ -1,5 +1,6 @@
 package palsofpaulos.soundscape.common;
 
+import android.location.Location;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.AsyncTask;
@@ -29,7 +30,7 @@ public class Recording {
     private int id;
     private String name;
     private byte[] data;
-    private LatLng location;
+    private Location location;
 
     private PlayAudioTask playTask;
     private boolean isPlaying;
@@ -37,7 +38,8 @@ public class Recording {
     private boolean isDeleted = false;
     private boolean isStopped = false;
 
-    public Recording(String filePath) {
+    public Recording(String filePath, Location location) {
+        this.location = location;
         this.filePath = filePath;
         this.file = new File(filePath);
         try {
@@ -57,6 +59,7 @@ public class Recording {
     public Recording(InputStream inputStream, String pathName) {
 
         this.id = lastId++;
+        this.location = location;
         this.filePath = pathName + "_id" + id + ".pcm";
         this.file = new File(filePath);
 
@@ -92,17 +95,19 @@ public class Recording {
     }
 
     /* Getters and Setters */
-    public String getFilePath() { return filePath; }
+    public String getFilePath() { return this.filePath; }
 
-    public File getFile() { return file; }
+    public File getFile() { return this.file; }
 
-    public int getId() { return id; }
+    public int getId() { return this.id; }
 
     public boolean isPlaying() { return this.isPlaying; }
 
     public boolean isDeleted() { return this.isDeleted; }
 
-    public PlayAudioTask getPlayTask() { return playTask; }
+    public PlayAudioTask getPlayTask() { return this.playTask; }
+
+    public Location getLocation() { return this.location; }
 
     // returns the length of the recording in seconds
     public int length() {

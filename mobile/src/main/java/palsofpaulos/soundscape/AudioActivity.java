@@ -5,43 +5,70 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
+import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.support.v4.app.FragmentActivity;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.ProgressBar;
 import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
+
+import com.google.android.gms.maps.CameraUpdate;
+import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapFragment;
+import com.google.android.gms.maps.OnMapReadyCallback;
+import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.Marker;
+import com.google.android.gms.maps.model.MarkerOptions;
 
 import java.util.ArrayList;
 
 import palsofpaulos.soundscape.common.Recording;
+import palsofpaulos.soundscape.common.RecordingManager;
 import palsofpaulos.soundscape.common.WearAPIManager;
 import palsofpaulos.soundscape.common.LayoutAnimations.*;
 
-public class AudioActivity extends AppCompatActivity {
+public class AudioActivity extends FragmentActivity implements OnMapReadyCallback {
 
     private static final String TAG = "Audio Activity";
     private static final int MUSIC_BAR_ANIMATION_DURATION = 500; // ms
     private static final int PLAY_LAYOUT_ANIMATION_DURATION = 700; // ms
+    private static final int MAP_ANIMATION_DURATION = 200;
+
+    private GoogleMap map;
 
     private View listLayout;
-    private int listLayoutInitHeight;
     private View recsLayout;
-    private int recsLayoutInitHeight;
+    private View recsListLayout;
+    private View mapLayout;
     private View barLayout;
-    private int barLayoutInitHeight;
-    private boolean playBarExpanded = false;
-    private boolean preventPlayBarClose = true;
     private View playLayout;
 
+    private int listLayoutInitHeight;
+    private int recsLayoutInitHeight;
+    private int recsListLayoutInitHeight;
+    private int barLayoutInitHeight;
+
+    private boolean playBarExpanded = false;
+    private boolean preventPlayBarClose = true;
+
+
+    private ImageButton mapsButton;
+    private ImageButton listButton;
     private ImageView playButtonBar;
     private ImageView playButtonBig;
     private ProgressBar progressBar;
@@ -54,7 +81,6 @@ public class AudioActivity extends AppCompatActivity {
     private ArrayList<Recording> recs = new ArrayList<>();
     private ListView recsView;
     private ArrayAdapter<Recording> recsAdapter;
-    private static final String SAVED_RECS = "ss_rec_list";
     private Recording playingRec; // references the currently playing recording, null otherwise
     private int oldProgress; // playhead progress is reset to 0 on pause, this stores the progress before reset
 
@@ -62,6 +88,10 @@ public class AudioActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio);
+
+        // start MobileMessengerService to update location
+        Intent mobileMessengerIntent = new Intent(this, MobileMessengerService.class);
+        startService(mobileMessengerIntent);
 
         // get recordings from saved preferences and populate listview
         getRecordings();
@@ -71,6 +101,8 @@ public class AudioActivity extends AppCompatActivity {
 
         listLayout = findViewById(R.id.list_layout);
         recsLayout = findViewById(R.id.recordings_layout);
+        recsListLayout = findViewById(R.id.recordings_list);
+        mapLayout = findViewById(R.id.map_layout);
         barLayout = findViewById(R.id.play_bar);
         playLayout = findViewById(R.id.play_layout);
         playLayout.setVisibility(View.GONE);
@@ -79,6 +111,9 @@ public class AudioActivity extends AppCompatActivity {
         initializeButtons();
 
         registerReceiver(audioReceiver, new IntentFilter(WearAPIManager.AUDIO_INTENT));
+
+        MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.recordings_map);
+        mapFragment.getMapAsync(this);
     }
 
 
@@ -97,12 +132,40 @@ public class AudioActivity extends AppCompatActivity {
         unregisterReceiver(audioReceiver);
     }
 
+    @Override
+    public void onMapReady(GoogleMap map) {
+        this.map = map;
+        for (int ii = 0; ii < recs.size(); ii++) {
+            Recording rec = recs.get(ii);
+            LatLng latLng = new LatLng(rec.getLocation().getLatitude(), rec.getLocation().getLongitude());
+            map.addMarker(new MarkerOptions()
+                    .position(latLng)
+                    .title(String.valueOf(ii)));
+        }
+        map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                int recId = Integer.valueOf(marker.getTitle());
+                playRecAtPosition(recId);
+                return false;
+            }
+        });
+        LatLng cameraLoc = new LatLng(WearAPIManager.currentLocation.getLatitude(), WearAPIManager.currentLocation.getLongitude());
+
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(cameraLoc, 10);
+        map.moveCamera(cameraUpdate);
+    }
+
+
     private BroadcastReceiver audioReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            final String filePath = intent.getStringExtra("filePath");
-            Recording newRec = new Recording(filePath);
+            final String filePath = intent.getStringExtra(WearAPIManager.REC_FILEPATH);
+            final Location recLoc = new Location("");
+            recLoc.setLatitude(intent.getDoubleExtra(WearAPIManager.REC_LAT, 0));
+            recLoc.setLongitude(intent.getDoubleExtra(WearAPIManager.REC_LNG, 0));
+            Recording newRec = new Recording(filePath, recLoc);
             recs.add(0, newRec);
             updateRecsView();
         }
@@ -110,6 +173,8 @@ public class AudioActivity extends AppCompatActivity {
 
 
     private void initializeButtons() {
+        mapsButton = (ImageButton) findViewById(R.id.maps_button);
+        listButton = (ImageButton) findViewById(R.id.list_button);
         playButtonBar = (ImageView) findViewById(R.id.play_pause_bar);
         playButtonBar.setImageResource(R.drawable.play_button);
         playButtonBig = (ImageView) findViewById(R.id.play_pause_big);
@@ -118,6 +183,26 @@ public class AudioActivity extends AppCompatActivity {
         seekBar = (SeekBar) findViewById(R.id.seek_bar);
         playText = (TextView) findViewById(R.id.play_text);
         playLength = (TextView) findViewById(R.id.play_length);
+
+        mapsButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (isNetworkAvailable()) {
+                    expandMapLayout();
+                }
+                else {
+                    Toast.makeText(getApplicationContext(), "Network connection required to use maps view",
+                            Toast.LENGTH_LONG).show();
+                }
+            }
+        });
+
+        listButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                closeMapLayout();
+            }
+        });
 
         // playListener defines what actions to take when a song progresses
         // and when it ends
@@ -128,10 +213,10 @@ public class AudioActivity extends AppCompatActivity {
             }
             @Override
             public void onFinished() {
-               setPlayButtons();
+                setPlayButtons();
                 oldProgress = 0;
                 if (playLayout.getVisibility() != View.VISIBLE) {
-                    closePlayBar();
+                    //closePlayBar();
                 }
             }
         };
@@ -223,32 +308,40 @@ public class AudioActivity extends AppCompatActivity {
 
     private void getRecordings() {
         recs.clear();
-        SharedPreferences prefs = getSharedPreferences(SAVED_RECS, MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(RecordingManager.SAVED_RECS, MODE_PRIVATE);
         for (int ii = 0; ; ii++){
-            String recPath = prefs.getString(String.valueOf(ii), "");
+            String recPath = prefs.getString(String.valueOf(ii) + "file", "");
+            Location recLoc = new Location("");
+            recLoc.setLatitude(Double.longBitsToDouble(prefs.getLong(String.valueOf(ii) + "lat", 0)));
+            recLoc.setLongitude(Double.longBitsToDouble(prefs.getLong(String.valueOf(ii) + "lng", 0)));
             if (!recPath.equals("")){
-                Recording addRec = new Recording(recPath);
+                Recording addRec = new Recording(recPath, recLoc);
                 recs.add(addRec);
             } else {
                 Log.d("Recordings Loaded:", String.valueOf(ii));
                 break; // Empty String means the default value was returned.
             }
         }
-        Recording.setLastId(recs.get(0).getId()+1);
+        if (recs.size() > 0) {
+            Recording.setLastId(recs.get(0).getId()+1);
+        }
     }
 
     private void saveRecordings() {
-        SharedPreferences prefs = getSharedPreferences(SAVED_RECS, MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(RecordingManager.SAVED_RECS, MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
         for (int ii = 0; ii < recs.size(); ii++) {
-            editor.putString(String.valueOf(ii), recs.get(ii).getFilePath());
+            Recording rec = recs.get(ii);
+            editor.putString(String.valueOf(ii) + "file", rec.getFilePath());
+            editor.putLong(String.valueOf(ii) + "lat", Double.doubleToRawLongBits(rec.getLocation().getLatitude()));
+            editor.putLong(String.valueOf(ii) + "lng", Double.doubleToLongBits(rec.getLocation().getLongitude()));
         }
         editor.commit();
     }
 
     private void clearRecordings() {
-        SharedPreferences prefs = getSharedPreferences(SAVED_RECS, MODE_PRIVATE);
+        SharedPreferences prefs = getSharedPreferences(RecordingManager.SAVED_RECS, MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
         editor.commit();
@@ -323,6 +416,57 @@ public class AudioActivity extends AppCompatActivity {
         recsLayout.startAnimation(closeAnim);
     }
 
+    public void expandMapLayout() {
+        mapLayout.setVisibility(View.VISIBLE);
+        recsListLayoutInitHeight = recsListLayout.getHeight();
+
+        LatLng cameraLoc = new LatLng(WearAPIManager.currentLocation.getLatitude(), WearAPIManager.currentLocation.getLongitude());
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(cameraLoc, 10);
+        map.moveCamera(cameraUpdate);
+
+        HeightAnimation closeAnim = new HeightAnimation(recsListLayout, recsListLayoutInitHeight, 0, MAP_ANIMATION_DURATION);
+        closeAnim.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                recsListLayout.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        recsListLayout.startAnimation(closeAnim);
+    }
+
+    public void closeMapLayout() {
+        recsListLayout.setVisibility(View.VISIBLE);
+
+        final HeightAnimation openRecsListAnim = new HeightAnimation(recsListLayout, 0, recsListLayoutInitHeight, MAP_ANIMATION_DURATION);
+        openRecsListAnim.setAnimationListener(new Animation.AnimationListener() {
+            @Override
+            public void onAnimationStart(Animation animation) {
+
+            }
+
+            @Override
+            public void onAnimationEnd(Animation animation) {
+                mapLayout.setVisibility(View.GONE);
+            }
+
+            @Override
+            public void onAnimationRepeat(Animation animation) {
+
+            }
+        });
+        recsListLayout.startAnimation(openRecsListAnim);
+    }
+
     public void expandPlayLayout() {
         preventPlayBarClose = true;
         playLayout.setVisibility(View.VISIBLE);
@@ -372,4 +516,10 @@ public class AudioActivity extends AppCompatActivity {
     }
 
 
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
 }
