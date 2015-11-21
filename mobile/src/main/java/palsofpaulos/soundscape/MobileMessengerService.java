@@ -132,7 +132,7 @@ public class MobileMessengerService extends WearableListenerService implements
     }
 
     private void sendRecordingToAudioActivity(Recording recording) {
-        if (lastRecordingName != null && !lastRecording.equals("")) {
+        if (lastRecordingName != null && !lastRecordingName.equals("")) {
             recording.setName(capitalizeWords(lastRecordingName));
         }
         else if (placeName != null && !placeName.equals("")) {
