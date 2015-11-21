@@ -1,12 +1,20 @@
 package palsofpaulos.soundscape;
 
+import android.content.Context;
+import android.content.Intent;
 import android.media.AudioRecord;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Bundle;
+import android.speech.RecognitionListener;
+import android.speech.RecognizerIntent;
+import android.speech.SpeechRecognizer;
 import android.support.v4.content.ContextCompat;
 import android.support.wearable.activity.WearableActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.wearable.Channel;
@@ -16,6 +24,8 @@ import com.google.android.gms.wearable.Wearable;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import palsofpaulos.soundscape.common.RecordingManager;
@@ -24,6 +34,7 @@ import palsofpaulos.soundscape.common.WearAPIManager;
 public class RecordActivity extends WearableActivity {
 
     private static final String TAG = "Record Activity";
+    private static final int SPEECH_REQUEST_CODE = 7;
 
     /* UI Elements */
     Button recButton;
@@ -33,6 +44,8 @@ public class RecordActivity extends WearableActivity {
     private GoogleApiClient mApiClient;
     private Channel mApiChannel;
     private String mApiNodeId;
+    private SpeechRecognizer speechRecognizer;
+    private boolean useSpeechForName = true;
 
     /* Recording Parameters */
     private int bufferSize = AudioRecord.getMinBufferSize(RecordingManager.SAMPLERATE, RecordingManager.CHANNELS_IN, RecordingManager.ENCODING);
@@ -48,7 +61,11 @@ public class RecordActivity extends WearableActivity {
         setAmbientEnabled();
 
         // recording is started once the wear api client connects
-        initializeGoogleApiClient();
+        initGoogleApiClient();
+
+        if (useSpeechForName) {
+            initSpeechRecgonition();
+        }
     }
 
     @Override
@@ -59,6 +76,7 @@ public class RecordActivity extends WearableActivity {
         if (mApiClient.isConnected()) {
             mApiClient.disconnect();
         }
+        speechRecognizer.destroy();
     }
 
 
@@ -78,7 +96,7 @@ public class RecordActivity extends WearableActivity {
         });
     }
 
-    private void initializeGoogleApiClient() {
+    private void initGoogleApiClient() {
         mApiClient = new GoogleApiClient.Builder(this)
                 .addApi(Wearable.API)  // used for data layer API
                 .build();
@@ -121,7 +139,13 @@ public class RecordActivity extends WearableActivity {
         } else {
             recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_off_3));
             stopRecording();
-            finish();
+            if (useSpeechForName && isNetworkAvailable()) {
+                startSpeechRecognition();
+            }
+            else {
+                WearMessengerService.sendMessage(mApiClient, WearAPIManager.SPEECH_RECOGNITION_RESULT, "");
+                finish();
+            }
         }
     }
 
@@ -182,7 +206,6 @@ public class RecordActivity extends WearableActivity {
         // Close the channel and disconnect from the API client
         if (mApiClient.isConnected()) {
             mApiChannel.close(mApiClient);
-            mApiClient.disconnect();
         }
     }
 
@@ -194,8 +217,57 @@ public class RecordActivity extends WearableActivity {
             recorder = null;
             recordingThread = null;
         }
+
     }
 
+    private void initSpeechRecgonition() {
+        speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
+    }
 
+    private void startSpeechRecognition() {
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            Log.e(TAG, "Speech recognition not available!");
+        } else {
+            Log.d(TAG, "Speech recognition available!!");
+        }
 
+        Intent recognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, this.getPackageName());
+        recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
+
+        startActivityForResult(recognizerIntent, SPEECH_REQUEST_CODE);
+        //speechRecognizer.startListening(recognizerIntent);
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode,
+                                    Intent data) {
+        if (requestCode == SPEECH_REQUEST_CODE) {
+            if (resultCode == RESULT_OK) {
+                List<String> results = data.getStringArrayListExtra(
+                        RecognizerIntent.EXTRA_RESULTS);
+                String spokenName = "";
+                for (int ii = 0; ii < results.size(); ii++) {
+                    spokenName += results.get(ii);
+                }
+                TextView responseText = (TextView) findViewById(R.id.response_text);
+                responseText.setText(spokenName);
+
+                WearMessengerService.sendMessage(mApiClient, WearAPIManager.SPEECH_RECOGNITION_RESULT, spokenName);
+            }
+            else {
+                WearMessengerService.sendMessage(mApiClient, WearAPIManager.SPEECH_RECOGNITION_RESULT, "");
+            }
+        }
+        super.onActivityResult(requestCode, resultCode, data);
+        finish();
+    }
+
+    private boolean isNetworkAvailable() {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
 }

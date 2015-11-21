@@ -6,19 +6,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
-import android.location.LocationListener;
-import android.media.AudioFormat;
-import android.media.AudioManager;
-import android.media.AudioTrack;
-import android.media.MediaPlayer;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.IBinder;
-import android.renderscript.ScriptGroup;
 import android.util.Log;
-import android.view.MotionEvent;
-import android.view.View;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -36,8 +25,11 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.Queue;
 
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.WearAPIManager;
@@ -51,6 +43,11 @@ public class MobileMessengerService extends WearableListenerService implements
 
     private GoogleApiClient mApiClient;
     private String placeName = "";
+
+    private Queue<Intent> pendingRecordings = new LinkedList<>();
+
+    private Recording lastRecording;
+    private String lastRecordingName;
 
     @Override
     public void onCreate() {
@@ -76,6 +73,10 @@ public class MobileMessengerService extends WearableListenerService implements
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         Log.d(TAG, messageEvent.getPath());
+        if (messageEvent.getPath().equals(WearAPIManager.SPEECH_RECOGNITION_RESULT)) {
+            lastRecordingName = new String(messageEvent.getData());
+            sendRecordingToAudioActivity(lastRecording);
+        }
     }
 
     @Override
@@ -131,38 +132,34 @@ public class MobileMessengerService extends WearableListenerService implements
     }
 
     private void sendRecordingToAudioActivity(Recording recording) {
+        if (lastRecordingName != null && !lastRecording.equals("")) {
+            recording.setName(capitalizeWords(lastRecordingName));
+        }
+        else if (placeName != null && !placeName.equals("")) {
+            recording.setName(placeName);
+        }
+        else {
+            recording.setName(recording.getDateString());
+        }
 
         Intent audioIntent = new Intent(WearAPIManager.AUDIO_INTENT);
         audioIntent.putExtra(WearAPIManager.REC_FILEPATH, recording.getFilePath());
         audioIntent.putExtra(WearAPIManager.REC_LAT, WearAPIManager.currentLocation.getLatitude());
         audioIntent.putExtra(WearAPIManager.REC_LNG, WearAPIManager.currentLocation.getLongitude());
-        audioIntent.putExtra(WearAPIManager.REC_PLACE, recording.getName());
+        audioIntent.putExtra(WearAPIManager.REC_NAME, recording.getName());
+        //audioIntent.putExtra(WearAPIManager.REC_PLACE, lastRecordingName);
         audioIntent.putExtra(WearAPIManager.REC_DATE, recording.getDateStorageString());
         sendBroadcast(audioIntent);
+
+        lastRecordingName = "";
+        placeName = "";
     }
+
+
 
     private void getRecordingFromChannel(final Channel channel) {
         final String rootPath = this.getFilesDir().getPath();
         final Date recDate = Calendar.getInstance().getTime();
-
-        PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
-                .getCurrentPlace(mApiClient, null);
-        result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
-            @Override
-            public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
-                String mostLikelyPlace = "";
-                double mostLikelyValue = 0;
-                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
-                    Log.d(TAG,"Place: " + placeLikelihood.getPlace().getName() + " | Likelihood: " + placeLikelihood.getLikelihood());
-                    if (placeLikelihood.getLikelihood() > mostLikelyValue) {
-                        mostLikelyPlace = (String) placeLikelihood.getPlace().getName();
-                        mostLikelyValue = placeLikelihood.getLikelihood();
-                    }
-                }
-                likelyPlaces.release();
-                placeName = mostLikelyPlace;
-            }
-        });
 
         Thread recordThread = new Thread(new Runnable() {
             public void run() {
@@ -172,11 +169,46 @@ public class MobileMessengerService extends WearableListenerService implements
                 }
                 Channel.GetInputStreamResult getInputStreamResult = channel.getInputStream(mApiClient).await();
                 InputStream inputStream = getInputStreamResult.getInputStream();
-                Recording recording = new Recording(inputStream, rootPath, null, recDate);
-                recording.setName(placeName);
-                sendRecordingToAudioActivity(recording);
+                lastRecording = new Recording(inputStream, rootPath, null, recDate);
             }
         }, "RecordFile Thread");
         recordThread.start();
+
+        getCurrentPlaceName();
+    }
+
+    private void getCurrentPlaceName() {
+        PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
+                .getCurrentPlace(mApiClient, null);
+        result.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
+            @Override
+            public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
+                String mostLikelyPlace = "";
+                double mostLikelyValue = 0;
+                for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                    Log.d(TAG, "Place: " + placeLikelihood.getPlace().getName() + " | Likelihood: " + placeLikelihood.getLikelihood());
+                    if (placeLikelihood.getLikelihood() > mostLikelyValue) {
+                        mostLikelyPlace = (String) placeLikelihood.getPlace().getName();
+                        mostLikelyValue = placeLikelihood.getLikelihood();
+                    }
+                }
+                likelyPlaces.release();
+                placeName = mostLikelyPlace;
+            }
+        });
+    }
+
+    public static String capitalizeWords(String str) {
+        if (str.equals("")) {
+            return str;
+        }
+        String[] arr = str.split(" ");
+        StringBuffer sb = new StringBuffer();
+
+        for (int ii = 0; ii < arr.length; ii++) {
+            sb.append(Character.toUpperCase(arr[ii].charAt(0)))
+                    .append(arr[ii].substring(1)).append(" ");
+        }
+        return sb.toString().trim();
     }
 }

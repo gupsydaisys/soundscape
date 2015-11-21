@@ -186,7 +186,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             final Date recDate = RecordingManager.recDateFromString(intent.getStringExtra(WearAPIManager.REC_DATE));
 
             Recording newRec = new Recording(filePath, recLoc, recDate);
-            newRec.setName(intent.getStringExtra(WearAPIManager.REC_PLACE));
+            newRec.setName(intent.getStringExtra(WearAPIManager.REC_NAME));
 
 
             recs.add(0, newRec);

@@ -10,12 +10,18 @@ public class WearAPIManager {
 
     public static final String RECORD_ACTIVITY = "/record_activity";
 
+    public static final String SPEECH_RECOGNITION_RESULT = "/speech_recog_res";
+    public static final String RECORDING_READY = "/recording_ready";
     public static final String RECORD_CHANNEL = "/record_channel";
 
+    // broadcast intents
     public static final String AUDIO_INTENT = "/audio_intent";
+
+    // recording intent extras
     public static final String REC_FILEPATH = "filepath";
     public static final String REC_LAT = "lat";
     public static final String REC_LNG = "lng";
+    public static final String REC_NAME = "name";
     public static final String REC_PLACE = "place";
     public static final String REC_DATE = "date";
 
