@@ -225,6 +225,19 @@
             android:layout_marginTop="40dip"
             android:layout_below="@id/seek_bar" />
 
+        <EditText
+            android:id="@+id/play_text_edit"
+            android:focusableInTouchMode="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:inputType="textCapWords"
+            android:layout_marginTop="40dip"
+            android:layout_below="@id/seek_bar"
+            android:visibility="gone"/>
+
     </RelativeLayout>
 </LinearLayout>
 

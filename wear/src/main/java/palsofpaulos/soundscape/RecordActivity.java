@@ -251,8 +251,6 @@ public class RecordActivity extends WearableActivity {
                 for (int ii = 0; ii < results.size(); ii++) {
                     spokenName += results.get(ii);
                 }
-                TextView responseText = (TextView) findViewById(R.id.response_text);
-                responseText.setText(spokenName);
 
                 WearMessengerService.sendMessage(mApiClient, WearAPIManager.SPEECH_RECOGNITION_RESULT, spokenName);
             }

@@ -11,10 +11,14 @@ import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.animation.Animation;
+import android.view.inputmethod.EditorInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -84,6 +88,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private TextView seekCurrentTime;
     private TextView seekTotalTime;
     private TextView playTextBig;
+    private EditText playTextEdit;
     private Recording.PlayListener playListener;
 
     /* Recordings Data */
@@ -208,6 +213,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         seekBar = (SeekBar) findViewById(R.id.seek_bar);
         playText = (TextView) findViewById(R.id.play_text_bar);
         playLength = (TextView) findViewById(R.id.play_length);
+        playTextEdit = (EditText) findViewById(R.id.play_text_edit);
 
         mapsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -229,8 +235,44 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         });
 
-        // playListener defines what actions to take when a song progresses
-        // and when it ends
+        playTextBig.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+
+                playTextBig.setVisibility(View.GONE);
+                playTextEdit.setVisibility(View.VISIBLE);
+                playTextEdit.requestFocus();
+                playTextEdit.selectAll();
+                InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                mgr.showSoftInput(playTextEdit, 0);
+                return false;
+            }
+        });
+
+        playTextEdit.setOnEditorActionListener(
+                new EditText.OnEditorActionListener() {
+                    @Override
+                    public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
+                        if (actionId == EditorInfo.IME_ACTION_DONE || event != null &&
+                                event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                            if (!(event != null && event.isShiftPressed())) {
+                                // the user is done typing.
+                                playingRec.setName(playTextEdit.getText().toString());
+                                setPlayText(playingRec.getName());
+                                playTextEdit.setVisibility(View.GONE);
+                                playTextBig.setVisibility(View.VISIBLE);
+                                InputMethodManager mgr = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
+                                mgr.hideSoftInputFromWindow(playTextEdit.getWindowToken(), 0);
+
+                                recsAdapter.notifyDataSetChanged();
+                                return true; // consume.
+                            }
+                        }
+                        return false; // pass on to other listeners.
+                    }
+                });
+
+        // playListener defines what actions to take when a song progresses and when it ends
         playListener = new Recording.PlayListener() {
             @Override
             public void onUpdate(final int progress) {
@@ -344,13 +386,13 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         rec.play(playListener);
         // Setup and display audio play bar
         setPauseButtons();
-        playText.setText(String.valueOf(rec.getId()));
+        setPlayText(rec.getName());
+        playTextEdit.setText(rec.getName());
         playLength.setText(rec.lengthString());
         setProgressBarsMax(playingRec.frameLength());
         setProgressBars(0);
         seekCurrentTime.setText("--:--");
         seekTotalTime.setText(rec.lengthString());
-        playTextBig.setText(rec.getName());
         expandPlayBar();
     }
 
@@ -445,6 +487,17 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     public void setProgressBarsMax(int max) {
         progressBar.setMax(max);
         seekBar.setMax(max);
+    }
+
+    public void setPlayText(String name) {
+        if (name.equals("")) {
+            playText.setText("(Untitled)");
+            playTextBig.setText("(Untitled)");
+        }
+        else {
+            playText.setText(name);
+            playTextBig.setText(name);
+        }
     }
 
     public void expandPlayBar() {
