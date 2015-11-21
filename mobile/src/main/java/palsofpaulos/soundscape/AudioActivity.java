@@ -83,6 +83,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private TextView playLength;
     private TextView seekCurrentTime;
     private TextView seekTotalTime;
+    private TextView playTextBig;
     private Recording.PlayListener playListener;
 
     /* Recordings Data */
@@ -116,6 +117,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         playLayout.setVisibility(View.GONE);
         seekCurrentTime = (TextView) findViewById(R.id.seek_current_time);
         seekTotalTime = (TextView) findViewById(R.id.seek_total_time);
+        playTextBig = (TextView) findViewById(R.id.play_text_big);
         oldProgress = 0;
 
         initializeButtons();
@@ -138,7 +140,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     protected void onDestroy() {
         super.onDestroy();
 
-        saveRecordings();
         unregisterReceiver(audioReceiver);
     }
 
@@ -205,7 +206,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         playButtonBig.setImageResource(R.drawable.play_button);
         progressBar = (ProgressBar) findViewById(R.id.progress_bar);
         seekBar = (SeekBar) findViewById(R.id.seek_bar);
-        playText = (TextView) findViewById(R.id.play_text);
+        playText = (TextView) findViewById(R.id.play_text_bar);
         playLength = (TextView) findViewById(R.id.play_length);
 
         mapsButton.setOnClickListener(new View.OnClickListener() {
@@ -316,7 +317,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             public void onStopTrackingTouch(SeekBar seekBar) {
                 blockSeekUpdate = false;
                 oldProgress = seekBar.getProgress();
-                //playingRec.setPlayHead(oldProgress);
             }
         });
     }
@@ -350,6 +350,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         setProgressBars(0);
         seekCurrentTime.setText("--:--");
         seekTotalTime.setText(rec.lengthString());
+        playTextBig.setText(rec.getName());
         expandPlayBar();
     }
 

@@ -126,7 +126,7 @@
                 android:gravity="center_vertical"
                 android:layout_toRightOf="@id/up_arrow">
 
-                <TextView android:id="@+id/play_text"
+                <TextView android:id="@+id/play_text_bar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/white"
@@ -215,9 +215,17 @@
             android:layout_below="@id/seek_bar"
             android:layout_alignParentEnd="true"/>
 
+        <TextView
+            android:id="@+id/play_text_big"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:layout_marginTop="40dip"
+            android:layout_below="@id/seek_bar" />
+
     </RelativeLayout>
-
-
 </LinearLayout>
 
 
