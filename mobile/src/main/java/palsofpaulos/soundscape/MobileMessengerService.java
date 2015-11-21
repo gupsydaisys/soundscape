@@ -36,6 +36,8 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
 import java.io.InputStream;
+import java.util.Calendar;
+import java.util.Date;
 
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.WearAPIManager;
@@ -135,11 +137,13 @@ public class MobileMessengerService extends WearableListenerService implements
         audioIntent.putExtra(WearAPIManager.REC_LAT, WearAPIManager.currentLocation.getLatitude());
         audioIntent.putExtra(WearAPIManager.REC_LNG, WearAPIManager.currentLocation.getLongitude());
         audioIntent.putExtra(WearAPIManager.REC_PLACE, recording.getName());
+        audioIntent.putExtra(WearAPIManager.REC_DATE, recording.getDateStorageString());
         sendBroadcast(audioIntent);
     }
 
     private void getRecordingFromChannel(final Channel channel) {
         final String rootPath = this.getFilesDir().getPath();
+        final Date recDate = Calendar.getInstance().getTime();
 
         PendingResult<PlaceLikelihoodBuffer> result = Places.PlaceDetectionApi
                 .getCurrentPlace(mApiClient, null);
@@ -149,6 +153,7 @@ public class MobileMessengerService extends WearableListenerService implements
                 String mostLikelyPlace = "";
                 double mostLikelyValue = 0;
                 for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                    Log.d(TAG,"Place: " + placeLikelihood.getPlace().getName() + " | Likelihood: " + placeLikelihood.getLikelihood());
                     if (placeLikelihood.getLikelihood() > mostLikelyValue) {
                         mostLikelyPlace = (String) placeLikelihood.getPlace().getName();
                         mostLikelyValue = placeLikelihood.getLikelihood();
@@ -167,7 +172,7 @@ public class MobileMessengerService extends WearableListenerService implements
                 }
                 Channel.GetInputStreamResult getInputStreamResult = channel.getInputStream(mApiClient).await();
                 InputStream inputStream = getInputStreamResult.getInputStream();
-                Recording recording = new Recording(inputStream, rootPath);
+                Recording recording = new Recording(inputStream, rootPath, null, recDate);
                 recording.setName(placeName);
                 sendRecordingToAudioActivity(recording);
             }

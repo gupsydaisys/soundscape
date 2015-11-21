@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.util.Calendar;
+import java.util.Date;
 
 
 public class Recording {
@@ -29,7 +31,7 @@ public class Recording {
 
     private int id;
     private String name;
-    private byte[] data;
+    private Date dateCreated;
     private Location location;
 
     private PlayAudioTask playTask;
@@ -38,8 +40,10 @@ public class Recording {
     private boolean isDeleted = false;
     private boolean isStopped = false;
 
-    public Recording(String filePath, Location location) {
+    // Constructor used to rebuild a stored recording
+    public Recording(String filePath, Location location, Date date) {
         this.location = location;
+        this.dateCreated = date;
         this.filePath = filePath;
         this.file = new File(filePath);
         try {
@@ -56,12 +60,15 @@ public class Recording {
         truncateFile();
     }
 
-    public Recording(InputStream inputStream, String pathName) {
+    // Constructor used to create a new recording from a data inputStream
+    public Recording(InputStream inputStream, String pathName, Location location, Date date) {
 
         this.id = lastId++;
         this.location = location;
+        this.dateCreated = Calendar.getInstance().getTime();
         this.filePath = pathName + "_id" + id + ".pcm";
         this.file = new File(filePath);
+        this.location = (location != null ? location : RecordingManager.DEFAULT_LOCATION);
 
         OutputStream outputStream = null;
         try {
@@ -111,9 +118,24 @@ public class Recording {
 
     public Location getLocation() { return this.location; }
 
+    public Date getDate() { return this.dateCreated; }
+
+    public String getDateString() {
+        return RecordingManager.PRINT_DATE_FORMAT.format(this.dateCreated);
+    }
+
+    public String getDateStorageString() {
+        return RecordingManager.STORE_DATE_FORMAT.format(this.dateCreated);
+    }
+
+
+    public int currentPlayTime(int oldProgress) {
+        return (int) ((oldProgress + playTask.getPlayHead()) / RecordingManager.SAMPLERATE);
+    }
+
     // returns the length of the recording in seconds
     public int length() {
-        return (int) (file.length() / RecordingManager.SAMPLERATE);
+        return (int) (file.length() / 2 / RecordingManager.SAMPLERATE);
     }
 
     public int frameLength() {
@@ -340,6 +362,13 @@ public class Recording {
             isPlaying = false;
             playTask = null;
             playListener.onFinished();
+        }
+
+        private int getPlayHead() {
+            if (track == null) {
+                return 0;
+            }
+            return track.getPlaybackHeadPosition();
         }
 
         private void setPlayHead(int position) {

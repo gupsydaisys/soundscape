@@ -47,13 +47,13 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
             row = inflater.inflate(layoutResourceId, parent, false);
 
             holder = new RecHolder();
-            //holder.hScrollView = (HorizontalScrollView) row.findViewById(R.id.h_scroll_view);
             holder.container = (RelativeLayout) row.findViewById(R.id.h_scroll_view_container);
             holder.delButton = (RelativeLayout) row.findViewById(R.id.delete_button);
             holder.delVisible = false;
             holder.recData = (LinearLayout) row.findViewById(R.id.rec_data);
             holder.recText = (TextView) row.findViewById(R.id.rec_text);
             holder.recLength = (TextView) row.findViewById(R.id.rec_length);
+            holder.recDate = (TextView) row.findViewById(R.id.rec_date);
 
             row.setTag(holder);
         } else {
@@ -68,56 +68,8 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
             holder.recText.setText(rec.getName());
         }
         holder.recLength.setText(rec.lengthString());
+        holder.recDate.setText(rec.getDateString());
 
-        /*
-        holder.hScrollView.requestDisallowInterceptTouchEvent(true);
-        holder.recData.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-                if(event.getAction() == MotionEvent.ACTION_DOWN){
-                    touchDown = true;
-                }
-                else if(event.getAction() == MotionEvent.ACTION_UP){
-                    touchUp = true;
-                }
-                else{
-                    touchDown = false;
-                    touchUp = false;
-                }
-
-                if(touchDown && touchUp){
-                    parentList.performItemClick(holder.recData, position, holder.recData.getId());
-                }
-
-                return false;
-            }
-        });
-
-        // delete button click action
-        holder.delButton.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View v, MotionEvent event) {
-
-                if(event.getAction() == MotionEvent.ACTION_DOWN){
-                    touchDown = true;
-                }
-                else if(event.getAction() == MotionEvent.ACTION_UP){
-                    touchUp = true;
-                }
-                else{
-                    touchDown = false;
-                    touchUp = false;
-                }
-
-                if(touchDown && touchUp){
-                    rec.delete();
-                    recs.remove(position);
-                    notifyDataSetChanged();
-                }
-                return false;
-            }
-        });
-        */
         holder.delButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -138,6 +90,7 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
         LinearLayout recData;
         TextView recText;
         TextView recLength;
+        TextView recDate;
     }
 
 }

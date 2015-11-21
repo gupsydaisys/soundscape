@@ -5,14 +5,11 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
-import android.location.Address;
-import android.location.Geocoder;
 import android.location.Location;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.view.animation.Animation;
@@ -28,7 +25,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 
-import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -38,13 +34,12 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
-import java.util.Locale;
 
 import palsofpaulos.soundscape.common.Recording;
+import palsofpaulos.soundscape.common.RecordingException;
 import palsofpaulos.soundscape.common.RecordingManager;
 import palsofpaulos.soundscape.common.WearAPIManager;
 import palsofpaulos.soundscape.common.LayoutAnimations.*;
@@ -57,7 +52,8 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private static final int MAP_ANIMATION_DURATION = 200;
 
     private GoogleMap map;
-    private HashMap<Marker, Integer> markerIdHashMap;
+    private ArrayList<Marker> mapMarkers = new ArrayList<>();
+    private HashMap<Marker, Recording> markerIdHashMap;
 
     Intent mobileMessengerIntent;
 
@@ -75,6 +71,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private boolean playBarExpanded = false;
     private boolean preventPlayBarClose = true;
+    private boolean blockSeekUpdate = false;
 
     private ImageButton mapsButton;
     private ImageButton listButton;
@@ -84,6 +81,8 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private SeekBar seekBar;
     private TextView playText;
     private TextView playLength;
+    private TextView seekCurrentTime;
+    private TextView seekTotalTime;
     private Recording.PlayListener playListener;
 
     /* Recordings Data */
@@ -115,6 +114,8 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         barLayout = findViewById(R.id.play_bar);
         playLayout = findViewById(R.id.play_layout);
         playLayout.setVisibility(View.GONE);
+        seekCurrentTime = (TextView) findViewById(R.id.seek_current_time);
+        seekTotalTime = (TextView) findViewById(R.id.seek_total_time);
         oldProgress = 0;
 
         initializeButtons();
@@ -146,15 +147,19 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         this.map = map;
         markerIdHashMap = new HashMap<>();
         for (int ii = 0; ii < recs.size(); ii++) {
-            Recording rec = recs.get(ii);
-            LatLng latLng = new LatLng(rec.getLocation().getLatitude(), rec.getLocation().getLongitude());
-            Marker recMarker = map.addMarker(new MarkerOptions().position(latLng).title(rec.getName()));
-            markerIdHashMap.put(recMarker, ii);
+            addMarkerForRec(ii);
         }
         map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
             public boolean onMarkerClick(Marker marker) {
-                playRecAtPosition(markerIdHashMap.get(marker));
+                try {
+                    playRec(markerIdHashMap.get(marker));
+                }
+                catch (RecordingException e) {
+                    marker.remove();
+                    Toast.makeText(getApplicationContext(), "This recording no longer exists",
+                            Toast.LENGTH_LONG).show();
+                }
                 return false;
             }
         });
@@ -177,12 +182,15 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             double longitude = intent.getDoubleExtra(WearAPIManager.REC_LNG, 0);
             recLoc.setLatitude(latitude);
             recLoc.setLongitude(longitude);
+            final Date recDate = RecordingManager.recDateFromString(intent.getStringExtra(WearAPIManager.REC_DATE));
 
-            Recording newRec = new Recording(filePath, recLoc);
+            Recording newRec = new Recording(filePath, recLoc, recDate);
             newRec.setName(intent.getStringExtra(WearAPIManager.REC_PLACE));
 
 
             recs.add(0, newRec);
+            addMarkerForRec(0);
+
             updateRecsView();
         }
     };
@@ -225,14 +233,17 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         playListener = new Recording.PlayListener() {
             @Override
             public void onUpdate(final int progress) {
-                setProgressBars(oldProgress + progress);
+                if (!blockSeekUpdate) {
+                    setProgressBars(oldProgress + progress);
+                    seekCurrentTime.setText(currentPlayTime());
+                }
             }
             @Override
             public void onFinished() {
                 setPlayButtons();
                 oldProgress = 0;
-                if (playLayout.getVisibility() != View.VISIBLE) {
-                    //closePlayBar();
+                if (playLayout.getVisibility() != View.VISIBLE && (playingRec == null || playingRec.isDeleted())) {
+                    closePlayBar();
                 }
             }
         };
@@ -240,7 +251,14 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         recsView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                playRecAtPosition(position);
+                try {
+                    playRecAtPosition(position);
+                }
+                catch (RecordingException e) {
+                    Log.e(TAG, "Tried to play deleted recording!");
+                    Toast.makeText(getApplicationContext(), "This recording no longer exists",
+                            Toast.LENGTH_LONG).show();
+                }
             }
         });
 
@@ -283,42 +301,67 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                seekCurrentTime.setText(virtualPlayTime(progress));
+                if (fromUser) {
+                    playingRec.setPlayHead(progress);
+                }
             }
 
             @Override
             public void onStartTrackingTouch(SeekBar seekBar) {
+                blockSeekUpdate = true;
             }
 
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
+                blockSeekUpdate = false;
                 oldProgress = seekBar.getProgress();
-                playingRec.setPlayHead(oldProgress);
+                //playingRec.setPlayHead(oldProgress);
             }
         });
     }
 
-    public void playRecAtPosition(int position) {
+    /* Methods to handle playback, ensuring only one recording plays at a time */
+
+    public void playRecAtPosition(int position) throws RecordingException {
+        playRec(recs.get(position));
+    }
+
+    public void playRec(Recording rec) throws RecordingException {
         if (playingRec != null) {
             preventPlayBarClose = true;
             playingRec.stop();
             preventPlayBarClose = false;
         }
-        oldProgress = 0;
+        //oldProgress = 0;
 
-        Recording rec = recs.get(position);
         playingRec = rec;
-        rec.play(playListener);
 
+        if (rec == null || rec.isDeleted()) {
+            throw new RecordingException("Tried to play recording" + rec.getId() + " which has been deleted!");
+        }
+
+        rec.play(playListener);
         // Setup and display audio play bar
         setPauseButtons();
         playText.setText(String.valueOf(rec.getId()));
         playLength.setText(rec.lengthString());
         setProgressBarsMax(playingRec.frameLength());
         setProgressBars(0);
+        seekCurrentTime.setText("--:--");
+        seekTotalTime.setText(rec.lengthString());
         expandPlayBar();
     }
 
+    public String currentPlayTime() {
+        int playHead = playingRec.currentPlayTime(oldProgress);
+        return String.format("%d:%02d", playHead / 60, playHead % 60);
+    }
 
+    public String virtualPlayTime(int progress) {
+        int playHead = (progress / RecordingManager.SAMPLERATE);
+        return String.format("%d:%02d", playHead / 60, playHead % 60);
+    }
 
     /* Methods to Handle Recording Data */
 
@@ -327,11 +370,15 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         SharedPreferences prefs = getSharedPreferences(RecordingManager.SAVED_RECS, MODE_PRIVATE);
         for (int ii = 0; ; ii++){
             String recPath = prefs.getString(ii + "file", "");
-            Location recLoc = new Location("");
-            recLoc.setLatitude(Double.longBitsToDouble(prefs.getLong(ii + "lat", 0)));
-            recLoc.setLongitude(Double.longBitsToDouble(prefs.getLong(ii + "lng", 0)));
+
+            // recPath is an empty string when we've run out of recordings to get
             if (!recPath.equals("")){
-                Recording addRec = new Recording(recPath, recLoc);
+                Location recLoc = new Location("");
+                Date recDate = RecordingManager.recDateFromString(prefs.getString(ii + "date", ""));
+                recLoc.setLatitude(Double.longBitsToDouble(prefs.getLong(ii + "lat", 0)));
+                recLoc.setLongitude(Double.longBitsToDouble(prefs.getLong(ii + "lng", 0)));
+
+                Recording addRec = new Recording(recPath, recLoc, recDate);
                 addRec.setName(prefs.getString(ii + "place", ""));
                 recs.add(addRec);
             } else {
@@ -354,6 +401,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             editor.putLong(ii + "lat", Double.doubleToRawLongBits(rec.getLocation().getLatitude()));
             editor.putLong(ii + "lng", Double.doubleToLongBits(rec.getLocation().getLongitude()));
             editor.putString(ii + "place", rec.getName());
+            editor.putString(ii + "date", rec.getDateStorageString());
         }
         editor.commit();
     }
@@ -372,8 +420,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         ra.notifyDataSetChanged();
         recsView.invalidate();
     }
-
-
 
 
 
@@ -445,7 +491,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         else {
             cameraLoc = new LatLng(WearAPIManager.currentLocation.getLatitude(), WearAPIManager.currentLocation.getLongitude());
         }
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(cameraLoc, 10);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(cameraLoc, 15);
         map.moveCamera(cameraUpdate);
 
         HeightAnimation closeAnim = new HeightAnimation(recsListLayout, recsListLayoutInitHeight, 0, MAP_ANIMATION_DURATION);
@@ -537,6 +583,19 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         });
         listLayout.startAnimation(openListAnim);
+    }
+
+
+
+    private void addMarkerForRec(int position) {
+        Recording rec = recs.get(position);
+        LatLng latLng = new LatLng(rec.getLocation().getLatitude(), rec.getLocation().getLongitude());
+        Marker recMarker = map.addMarker(new MarkerOptions()
+                .position(latLng)
+                .title(rec.getName())
+                .snippet(rec.getDateString()));
+        mapMarkers.add(position, recMarker);
+        markerIdHashMap.put(recMarker, rec);
     }
 
 

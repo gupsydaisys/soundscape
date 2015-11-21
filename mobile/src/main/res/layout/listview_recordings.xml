@@ -5,32 +5,6 @@
     android:layout_width="match_parent"
     android:layout_height="60dip">
 
-    <LinearLayout
-        android:id="@+id/rec_data"
-        android:orientation="vertical"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@drawable/audio_list_item"
-        android:paddingStart="10dip"
-        android:paddingEnd="10dip">
-
-        <TextView android:id="@+id/rec_text"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:gravity="center_vertical"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            android:paddingTop="2dip"
-            android:paddingBottom="2dip"/>
-
-        <TextView android:id="@+id/rec_length"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/primaryBackground"
-            android:paddingBottom="2dip"/>
-
-    </LinearLayout>
-
     <RelativeLayout
         android:id="@+id/delete_button"
         android:layout_width="50dip"
@@ -41,7 +15,6 @@
         <ImageView
             android:background="@drawable/garbage"
             android:backgroundTint="@color/charcoal"
-            android:text="Delete"
             android:textSize="15sp"
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
@@ -51,4 +24,46 @@
             android:layout_width="30dip"
             android:layout_height="30dip" />
     </RelativeLayout>
+
+    <LinearLayout
+        android:id="@+id/rec_data"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/audio_list_item"
+        android:paddingStart="10dip"
+        android:paddingEnd="10dip"
+        android:layout_toStartOf="@id/delete_button">
+
+        <TextView android:id="@+id/rec_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:paddingTop="2dip"
+            android:paddingBottom="2dip"/>
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <TextView android:id="@+id/rec_length"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:textColor="@color/primaryBackground"
+                android:layout_alignParentStart="true"
+                android:paddingBottom="2dip"/>
+
+            <TextView android:id="@+id/rec_date"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:textColor="@color/primaryBackground"
+                android:textSize="14sp"
+                android:paddingBottom="2dip"
+                android:paddingEnd="5dip"
+                android:layout_alignParentEnd="true"/>
+        </RelativeLayout>
+
+    </LinearLayout>
 </RelativeLayout>

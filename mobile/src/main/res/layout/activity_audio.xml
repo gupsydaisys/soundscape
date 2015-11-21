@@ -197,6 +197,24 @@
             android:layout_centerHorizontal="true"
             android:layout_below="@id/play_pause_big"/>
 
+        <TextView
+            android:id="@+id/seek_current_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="10dip"
+            android:textColor="@color/primaryBackground"
+            android:layout_below="@id/seek_bar"
+            android:layout_alignParentStart="true"/>
+
+        <TextView
+            android:id="@+id/seek_total_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingEnd="10dip"
+            android:textColor="@color/primaryBackground"
+            android:layout_below="@id/seek_bar"
+            android:layout_alignParentEnd="true"/>
+
     </RelativeLayout>
 
 
