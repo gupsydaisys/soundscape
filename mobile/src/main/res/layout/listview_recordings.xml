@@ -40,7 +40,8 @@
             android:layout_height="wrap_content"
             android:gravity="center_vertical"
             android:textColor="@color/white"
-            android:textSize="20sp"
+            android:textSize="18sp"
+            android:singleLine="true"
             android:paddingTop="2dip"
             android:paddingBottom="2dip"/>
 
