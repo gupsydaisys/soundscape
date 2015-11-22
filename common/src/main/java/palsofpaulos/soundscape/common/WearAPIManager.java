@@ -16,6 +16,7 @@ public class WearAPIManager {
 
     // broadcast intents
     public static final String AUDIO_INTENT = "/audio_intent";
+    public static final String AUDIO_RESPONSE_INTENT = "/response_intent";
 
     // recording intent extras
     public static final String REC_FILEPATH = "filepath";

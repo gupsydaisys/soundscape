@@ -25,36 +25,31 @@
                 tools:context=".MainActivity"
                 android:background="@drawable/blue_black_texture">
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
-                    android:orientation="horizontal"
                     android:layout_height="wrap_content"
                     android:background="@color/primaryDark">
+
+                    <ImageButton
+                        android:id="@+id/maps_button"
+                        android:layout_width="50dip"
+                        android:layout_height="50dip"
+                        android:src="@drawable/maps_ic"
+                        android:scaleType="fitCenter"
+                        android:layout_alignParentStart="true"/>
 
                     <TextView
                         android:id="@+id/headerRecordings"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:gravity="center_vertical"
                         android:textStyle="bold"
                         android:textSize="22sp"
                         android:textColor="@color/white"
                         android:padding="10dp"
-                        android:text="@string/recording_header" />
+                        android:text="@string/recording_header"
+                        android:layout_centerHorizontal="true"/>
 
-                    <View
-                        android:layout_width="0dip"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"/>
-
-                    <ImageButton
-                        android:id="@+id/maps_button"
-                        android:layout_width="50dip"
-                        android:layout_height="match_parent"
-                        android:src="@drawable/maps_ic"
-                        android:scaleType="fitCenter"/>
-
-                </LinearLayout>
+                </RelativeLayout>
 
                 <ListView
                     android:id="@+id/listRecordings"
@@ -88,7 +83,7 @@
                     android:layout_height="50dip"
                     android:src="@drawable/list_ic"
                     android:scaleType="fitCenter"
-                    android:layout_gravity="top|end"/>
+                    android:layout_gravity="top|start"/>
             </FrameLayout>
 
 

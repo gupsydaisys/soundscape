@@ -133,7 +133,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         mapFragment.getMapAsync(this);
     }
 
-
     @Override
     protected void onPause() {
         super.onPause();
@@ -181,6 +180,9 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private BroadcastReceiver audioReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
+
+            Intent responseIntent = new Intent(WearAPIManager.AUDIO_RESPONSE_INTENT);
+            sendBroadcast(responseIntent);
 
             final String filePath = intent.getStringExtra(WearAPIManager.REC_FILEPATH);
             final Location recLoc = new Location("");
@@ -535,8 +537,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     }
 
     public void expandMapLayout() {
-        mapLayout.setVisibility(View.VISIBLE);
-        recsListLayoutInitHeight = recsListLayout.getHeight();
 
         LatLng cameraLoc;
         if (playingRec != null) {
@@ -548,6 +548,11 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(cameraLoc, 15);
         map.moveCamera(cameraUpdate);
 
+        mapLayout.setVisibility(View.VISIBLE);
+        recsListLayout.setVisibility(View.GONE);
+
+        /*
+        recsListLayoutInitHeight = recsListLayout.getHeight();
         HeightAnimation closeAnim = new HeightAnimation(recsListLayout, recsListLayoutInitHeight, 0, MAP_ANIMATION_DURATION);
         closeAnim.setAnimationListener(new Animation.AnimationListener() {
             @Override
@@ -566,11 +571,14 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         });
         recsListLayout.startAnimation(closeAnim);
+        */
     }
 
     public void closeMapLayout() {
         recsListLayout.setVisibility(View.VISIBLE);
+        mapLayout.setVisibility(View.GONE);
 
+        /*
         final HeightAnimation openRecsListAnim = new HeightAnimation(recsListLayout, 0, recsListLayoutInitHeight, MAP_ANIMATION_DURATION);
         openRecsListAnim.setAnimationListener(new Animation.AnimationListener() {
             @Override
@@ -589,6 +597,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         });
         recsListLayout.startAnimation(openRecsListAnim);
+        */
     }
 
     public void expandPlayLayout() {

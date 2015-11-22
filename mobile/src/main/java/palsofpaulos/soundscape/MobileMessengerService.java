@@ -1,10 +1,9 @@
 package palsofpaulos.soundscape;
 
-import android.app.Notification;
-import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.location.Location;
 import android.os.Bundle;
 import android.util.Log;
@@ -25,11 +24,9 @@ import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
 import java.io.InputStream;
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
-import java.util.LinkedList;
-import java.util.Queue;
+import java.util.Stack;
 
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.WearAPIManager;
@@ -44,7 +41,9 @@ public class MobileMessengerService extends WearableListenerService implements
     private GoogleApiClient mApiClient;
     private String placeName = "";
 
-    private Queue<Intent> pendingRecordings = new LinkedList<>();
+    private BroadcastReceiver audioReceiver;
+    private boolean oldRecordingsSent = false;
+    private Stack<Intent> pendingRecordings = new Stack<>();
 
     private Recording lastRecording;
     private String lastRecordingName;
@@ -54,6 +53,10 @@ public class MobileMessengerService extends WearableListenerService implements
         super.onCreate();
 
         Log.d(TAG, "Service created!");
+
+        registerReceiver(responseReceiver, new IntentFilter(WearAPIManager.AUDIO_RESPONSE_INTENT));
+        sendPendingRecordings();
+        oldRecordingsSent = true;
 
         initializeGoogleApiClient();
         mApiClient.connect();
@@ -68,6 +71,8 @@ public class MobileMessengerService extends WearableListenerService implements
         if (mApiClient.isConnected()) {
             mApiClient.disconnect();
         }
+
+        unregisterReceiver(responseReceiver);
     }
 
     @Override
@@ -149,6 +154,7 @@ public class MobileMessengerService extends WearableListenerService implements
         audioIntent.putExtra(WearAPIManager.REC_NAME, recording.getName());
         //audioIntent.putExtra(WearAPIManager.REC_PLACE, lastRecordingName);
         audioIntent.putExtra(WearAPIManager.REC_DATE, recording.getDateStorageString());
+        pendingRecordings.push(audioIntent);
         sendBroadcast(audioIntent);
 
         lastRecordingName = "";
@@ -210,5 +216,22 @@ public class MobileMessengerService extends WearableListenerService implements
                     .append(arr[ii].substring(1)).append(" ");
         }
         return sb.toString().trim();
+    }
+
+    private BroadcastReceiver responseReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "Recording was received");
+            if (oldRecordingsSent) {
+                pendingRecordings.pop();
+            }
+        }
+    };
+
+    private void sendPendingRecordings() {
+        Log.d(TAG, "Unsent recordings found!");
+        while (pendingRecordings.size() > 0) {
+            sendBroadcast(pendingRecordings.pop());
+        }
     }
 }

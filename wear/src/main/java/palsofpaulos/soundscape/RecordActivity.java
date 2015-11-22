@@ -123,8 +123,6 @@ public class RecordActivity extends WearableActivity {
             }
         }, "Google API Thread");
         mApiThread.start();
-
-        mApiClient.disconnect();
     }
 
 

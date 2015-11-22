@@ -23,6 +23,9 @@ public class WearMessengerService extends WearableListenerService {
     }
 
     public static void sendMessage(final GoogleApiClient mApiClient, final String path, final String text) {
+        if (!mApiClient.isConnected()) {
+            mApiClient.connect();
+        }
         new Thread( new Runnable() {
             @Override
             public void run() {
