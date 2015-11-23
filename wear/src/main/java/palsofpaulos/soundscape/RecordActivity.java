@@ -60,6 +60,8 @@ public class RecordActivity extends WearableActivity {
         setContentView(R.layout.activity_record);
         setAmbientEnabled();
 
+        useSpeechForName = getIntent().getExtras().getBoolean(WearAPIManager.SPEECH_FOR_NAME_EXTRA);
+
         // recording is started once the wear api client connects
         initGoogleApiClient();
 

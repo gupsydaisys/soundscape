@@ -19,6 +19,8 @@ public class WearAPIManager {
     public static final String AUDIO_RESPONSE_INTENT = "/response_intent";
 
     // recording intent extras keys
+    public static final String SPEECH_FOR_NAME_EXTRA = "sfn_intent";
+
     public static final String REC_FILEPATH = "filepath";
     public static final String REC_LAT = "lat";
     public static final String REC_LNG = "lng";

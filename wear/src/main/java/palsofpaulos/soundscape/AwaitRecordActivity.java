@@ -12,6 +12,9 @@ import android.widget.TextView;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
+import palsofpaulos.soundscape.common.RecordingManager;
+import palsofpaulos.soundscape.common.WearAPIManager;
+
 public class AwaitRecordActivity extends WearableActivity {
 
     private static final String TAG = "Await Record Activity";
@@ -19,6 +22,7 @@ public class AwaitRecordActivity extends WearableActivity {
     /* Recording Activity Detection */
     private static final int INTERVAL = 1000;
     private static final int SECOND = 1000;
+    private boolean useSpeechForName = false;
     private CountDownTimer touchTimer;
     private int touches = 0;
 
@@ -27,6 +31,7 @@ public class AwaitRecordActivity extends WearableActivity {
 
     private BoxInsetLayout mContainerView;
     private TextView mTextView;
+    private TextView mSpeechForNameText;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +41,8 @@ public class AwaitRecordActivity extends WearableActivity {
 
         mContainerView = (BoxInsetLayout) findViewById(R.id.container);
         mTextView = (TextView) findViewById(R.id.text);
+        mSpeechForNameText = (TextView) findViewById(R.id.speech_for_name_text);
+        updateSpeechForNameText();
 
         final Intent recordIntent = new Intent(this, RecordActivity.class);
         recordIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -49,15 +56,33 @@ public class AwaitRecordActivity extends WearableActivity {
                     touchTimer.cancel();
                 }
                 touchTimer = new CountDownTimer(INTERVAL, SECOND) {
-                    public void onTick(long millisUntilFinished) { }
+                    public void onTick(long millisUntilFinished) {
+                    }
+
                     public void onFinish() {
                         touches = 0;
                     }
                 };
 
                 if (touches == 3) {
+                    recordIntent.putExtra(WearAPIManager.SPEECH_FOR_NAME_EXTRA, useSpeechForName);
                     startActivity(recordIntent);
                 }
+            }
+        });
+
+        mContainerView.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                if (useSpeechForName) {
+                    useSpeechForName = false;
+                }
+                else {
+                    useSpeechForName = true;
+                }
+                updateSpeechForNameText();
+
+                return true;
             }
         });
     }
@@ -92,6 +117,18 @@ public class AwaitRecordActivity extends WearableActivity {
             mContainerView.setBackground(getResources().getDrawable(android.R.color.black));
         } else {
             mContainerView.setBackground(getResources().getDrawable(R.drawable.blue_black_texture));
+        }
+    }
+
+    private void updateSpeechForNameText() {
+        if (mSpeechForNameText == null) {
+            return;
+        }
+        if (useSpeechForName) {
+            mSpeechForNameText.setText("Using Speech to Text");
+        }
+        else {
+            mSpeechForNameText.setText("Not using Speech to Text");
         }
     }
 }
