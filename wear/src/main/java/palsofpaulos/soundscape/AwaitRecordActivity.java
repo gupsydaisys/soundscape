@@ -5,6 +5,7 @@ import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.support.wearable.activity.WearableActivity;
 import android.support.wearable.view.BoxInsetLayout;
+import android.text.Html;
 import android.util.Log;
 import android.view.View;
 import android.widget.TextView;
@@ -124,10 +125,10 @@ public class AwaitRecordActivity extends WearableActivity {
             return;
         }
         if (useSpeechForName) {
-            mSpeechForNameText.setText("Speech to Text Naming <font color='#9CCB46'>Enabled</font>");
+            mSpeechForNameText.setText(Html.fromHtml("Speech to Text Naming <font color='#9CCB46'>Enabled</font>"));
         }
         else {
-            mSpeechForNameText.setText("Speech to Text Naming <font color='#D94B4F'>Disabled</font>");
+            mSpeechForNameText.setText(Html.fromHtml("Speech to Text Naming <font color='#D94B4F'>Disabled</font>"));
         }
     }
 }
