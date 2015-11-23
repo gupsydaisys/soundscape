@@ -28,7 +28,6 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Stack;
 
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.WearAPIManager;
@@ -90,7 +89,12 @@ public class MobileMessengerService extends WearableListenerService implements
                 return;
             }
             lastRecordingName = new String(messageEvent.getData());
-            sendRecordingToAudioActivity(lastRecording);
+            addRecordingToQueue(lastRecording);
+            lastRecording = null;
+            sendPendingRecordings();
+
+            lastRecordingName = "";
+            placeName = "";
         }
     }
 
@@ -158,15 +162,18 @@ public class MobileMessengerService extends WearableListenerService implements
                 }
                 Channel.GetInputStreamResult getInputStreamResult = channel.getInputStream(mApiClient).await();
                 InputStream inputStream = getInputStreamResult.getInputStream();
-                lastRecording = new Recording(inputStream, rootPath, null, recDate);
+                if (lastRecording != null) {
+                    addRecordingToQueue(lastRecording);
+                }
+                lastRecording = new Recording(inputStream, rootPath, WearAPIManager.currentLocation, recDate);
             }
         }, "RecordFile Thread");
         recordThread.start();
 
-        //getCurrentPlaceName();
+        getCurrentPlaceName();
     }
 
-    private void sendRecordingToAudioActivity(Recording recording) {
+    private void addRecordingToQueue(Recording recording) {
         if (recording == null) {
             Log.e(TAG, "Attempted to send null recording!");
             return;
@@ -183,24 +190,21 @@ public class MobileMessengerService extends WearableListenerService implements
 
         Intent audioIntent = new Intent(WearAPIManager.AUDIO_INTENT);
         audioIntent.putExtra(WearAPIManager.REC_FILEPATH, recording.getFilePath());
-        audioIntent.putExtra(WearAPIManager.REC_LAT, WearAPIManager.currentLocation.getLatitude());
-        audioIntent.putExtra(WearAPIManager.REC_LNG, WearAPIManager.currentLocation.getLongitude());
+        audioIntent.putExtra(WearAPIManager.REC_LAT, recording.getLocation().getLatitude());
+        audioIntent.putExtra(WearAPIManager.REC_LNG, recording.getLocation().getLongitude());
         audioIntent.putExtra(WearAPIManager.REC_NAME, recording.getName());
         //audioIntent.putExtra(WearAPIManager.REC_PLACE, lastRecordingName);
         audioIntent.putExtra(WearAPIManager.REC_DATE, recording.getDateStorageString());
-        pendingRecordings.add(audioIntent);
-        sendPendingRecordings();
 
-        lastRecordingName = "";
-        placeName = "";
+        pendingRecordings.add(audioIntent);
     }
 
     // response receiver gets indications that recordings are ready to be received
     private BroadcastReceiver responseReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
-            Log.d(TAG, "Response from audio activity received, sending recording");
             if (pendingRecordings.size() > 0) {
+                Log.d(TAG, "Response from audio activity received, sending recording");
                 sendBroadcast(pendingRecordings.remove());
                 sendBroadcast(checkResponseIntent);
             }
