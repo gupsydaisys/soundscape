@@ -124,10 +124,10 @@ public class AwaitRecordActivity extends WearableActivity {
             return;
         }
         if (useSpeechForName) {
-            mSpeechForNameText.setText("Speech to Text Naming Enabled");
+            mSpeechForNameText.setText("Speech to Text Naming <font color='#9CCB46'>Enabled</font>");
         }
         else {
-            mSpeechForNameText.setText("Speech to Text Naming Disabled");
+            mSpeechForNameText.setText("Speech to Text Naming <font color='#D94B4F'>Disabled</font>");
         }
     }
 }

@@ -15,4 +15,7 @@
     <color name="secondaryDark">#552300</color>
     <color name="error">#C1262A</color>
     <color name="errorPress">#740003</color>
+
+    <color name="voiceEnabled">#9CCB46</color>
+    <color name="voiceDisabled">#D94B4F</color>
 </resources>
