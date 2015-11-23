@@ -57,13 +57,14 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private GoogleMap map;
     private ArrayList<Marker> mapMarkers = new ArrayList<>();
-    private HashMap<Marker, Recording> markerIdHashMap;
+    private HashMap<Marker, Recording> markerRecHashmap;
 
     Intent mobileMessengerIntent;
 
     private View listLayout;
     private View recsLayout;
     private View recsListLayout;
+    private ListView recsView;
     private View mapLayout;
     private View barLayout;
     private View playLayout;
@@ -93,19 +94,21 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
     /* Recordings Data */
     private ArrayList<Recording> recs = new ArrayList<>();
-    private ListView recsView;
+
     private ArrayAdapter<Recording> recsAdapter;
     private Recording playingRec; // references the currently playing recording, null otherwise
     private int oldProgress; // playhead progress is reset to 0 on pause, this stores the progress before reset
+    private Intent responseIntent = new Intent(WearAPIManager.AUDIO_RESPONSE_INTENT);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio);
 
-        // start MobileMessengerService to update location
+        // start MobileMessengerService to update location and recordings
         mobileMessengerIntent = new Intent(this, MobileMessengerService.class);
         startService(mobileMessengerIntent);
+        sendBroadcast(responseIntent);
 
         // get recordings from saved preferences and populate listview
         getRecordings();
@@ -137,6 +140,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     protected void onPause() {
         super.onPause();
 
+        stopPlayback();
         saveRecordings();
     }
 
@@ -150,7 +154,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     @Override
     public void onMapReady(GoogleMap map) {
         this.map = map;
-        markerIdHashMap = new HashMap<>();
+        markerRecHashmap = new HashMap<>();
         for (int ii = 0; ii < recs.size(); ii++) {
             addMarkerForRec(ii);
         }
@@ -158,7 +162,9 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public boolean onMarkerClick(Marker marker) {
                 try {
-                    playRec(markerIdHashMap.get(marker));
+                    Recording markerRec = markerRecHashmap.get(marker);
+                    marker.setTitle(markerRec.getName());
+                    playRec(markerRec);
                 }
                 catch (RecordingException e) {
                     marker.remove();
@@ -184,14 +190,13 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
                 .title(rec.getName())
                 .snippet(rec.getDateString()));
         mapMarkers.add(position, recMarker);
-        markerIdHashMap.put(recMarker, rec);
+        markerRecHashmap.put(recMarker, rec);
     }
 
     private BroadcastReceiver audioReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            Intent responseIntent = new Intent(WearAPIManager.AUDIO_RESPONSE_INTENT);
             sendBroadcast(responseIntent);
 
             final String filePath = intent.getStringExtra(WearAPIManager.REC_FILEPATH);
@@ -413,6 +418,12 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         seekCurrentTime.setText("--:--");
         seekTotalTime.setText(rec.lengthString());
         expandPlayBar();
+    }
+
+    public void stopPlayback() {
+        if (playingRec != null) {
+            playingRec.stop();
+        }
     }
 
     public String currentPlayTime() {

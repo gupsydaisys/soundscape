@@ -114,10 +114,8 @@ public class MobileMessengerService extends WearableListenerService implements
                 .setResultCallback(new ResultCallback<Status>() {
                     @Override
                     public void onResult(Status status) {
-                        if (status.getStatus().isSuccess()) {
-                            Log.d(TAG, "Successfully requested location");
-                        } else {
-                            Log.e(TAG, status.getStatusMessage());
+                        if (!status.getStatus().isSuccess()) {
+                            Log.d(TAG, "Location request failed!");
                         }
                     }
                 });
@@ -125,7 +123,7 @@ public class MobileMessengerService extends WearableListenerService implements
 
     @Override
     public void onLocationChanged(Location location) {
-        Log.d(TAG, "Location updated!" + location.toString());
+        Log.d(TAG, location.toString());
         WearAPIManager.currentLocation = location;
     }
 
@@ -211,7 +209,6 @@ public class MobileMessengerService extends WearableListenerService implements
 
     private void sendPendingRecordings() {
         if (pendingRecordings.size() > 0) {
-            Log.d(TAG, "Unsent recordings found!");
             sendBroadcast(checkResponseIntent);
         }
     }
