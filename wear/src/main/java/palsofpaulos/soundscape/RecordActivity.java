@@ -225,6 +225,8 @@ public class RecordActivity extends WearableActivity {
     private void startSpeechRecognition() {
         if (!SpeechRecognizer.isRecognitionAvailable(this)) {
             Log.e(TAG, "Speech recognition not available!");
+            WearMessengerService.sendMessage(mApiClient, WearAPIManager.SPEECH_RECOGNITION_RESULT, "");
+            finish();
         } else {
             Log.d(TAG, "Speech recognition available!!");
         }

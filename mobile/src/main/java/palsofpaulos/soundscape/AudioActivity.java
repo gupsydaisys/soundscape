@@ -176,6 +176,16 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         stopService(mobileMessengerIntent);
     }
 
+    private void addMarkerForRec(int position) {
+        Recording rec = recs.get(position);
+        LatLng latLng = new LatLng(rec.getLocation().getLatitude(), rec.getLocation().getLongitude());
+        Marker recMarker = map.addMarker(new MarkerOptions()
+                .position(latLng)
+                .title(rec.getName())
+                .snippet(rec.getDateString()));
+        mapMarkers.add(position, recMarker);
+        markerIdHashMap.put(recMarker, rec);
+    }
 
     private BroadcastReceiver audioReceiver = new BroadcastReceiver() {
         @Override
@@ -185,6 +195,11 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             sendBroadcast(responseIntent);
 
             final String filePath = intent.getStringExtra(WearAPIManager.REC_FILEPATH);
+            // a null recording request was sent, indicating it was just looking for a response
+            if (filePath.equals(WearAPIManager.NULL_REC_PATH)) {
+                return;
+            }
+
             final Location recLoc = new Location("");
             double latitude = intent.getDoubleExtra(WearAPIManager.REC_LAT, 0);
             double longitude = intent.getDoubleExtra(WearAPIManager.REC_LNG, 0);
@@ -202,6 +217,8 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             updateRecsView();
         }
     };
+
+
 
 
     private void initializeButtons() {
@@ -646,19 +663,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         });
         listLayout.startAnimation(openListAnim);
-    }
-
-
-
-    private void addMarkerForRec(int position) {
-        Recording rec = recs.get(position);
-        LatLng latLng = new LatLng(rec.getLocation().getLatitude(), rec.getLocation().getLongitude());
-        Marker recMarker = map.addMarker(new MarkerOptions()
-                .position(latLng)
-                .title(rec.getName())
-                .snippet(rec.getDateString()));
-        mapMarkers.add(position, recMarker);
-        markerIdHashMap.put(recMarker, rec);
     }
 
 

@@ -29,11 +29,6 @@ public class RecordingManager {
 
     public static final String SAVED_RECS = "ss_rec_list";
 
-    private RecordingManager() {
-        this.DEFAULT_LOCATION.setLatitude(0);
-        this.DEFAULT_LOCATION.setLongitude(0);
-    }
-
     // returns date if string is properly formatted, otherwise the current date
     public static Date recDateFromString(String dateString) {
         Date recDate;
