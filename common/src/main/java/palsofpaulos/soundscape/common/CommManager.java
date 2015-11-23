@@ -16,6 +16,7 @@ public class CommManager {
     // broadcast intents
     public static final String AUDIO_INTENT = "/audio_intent";
     public static final String AUDIO_RESPONSE_INTENT = "/response_intent";
+    public static final String NAME_INTENT = "/name_intent";
 
     // recording intent extras keys
     public static final String SPEECH_FOR_NAME_EXTRA = "sfn_intent";
@@ -29,6 +30,7 @@ public class CommManager {
 
     // recording intent extras values
     public static final String NULL_REC_PATH = "null_path";
+    public static final String RENAME_PATH = "rename_path";
 
     public static final int LOCATION_UPDATE_INTERVAL = 300000;
     public static final int LOCATION_UPDATE_FASTEST = 60000;

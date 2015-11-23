@@ -59,8 +59,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private ArrayList<Marker> mapMarkers = new ArrayList<>();
     private HashMap<Marker, Recording> markerRecHashmap;
 
-    Intent mobileMessengerIntent;
-
     private View listLayout;
     private View recsLayout;
     private View recsListLayout;
@@ -105,6 +103,8 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio);
 
+        Intent messengerIntent = new Intent(this, MobileMessengerService.class);
+        startService(messengerIntent);
         sendBroadcast(responseIntent);
 
         // get recordings from saved preferences and populate listview
@@ -197,6 +197,11 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             final String filePath = intent.getStringExtra(CommManager.REC_FILEPATH);
             // a null recording request was sent, indicating it was just looking for a response
             if (filePath.equals(CommManager.NULL_REC_PATH)) {
+                return;
+            }
+            else if (filePath.equals(CommManager.RENAME_PATH)) {
+                recs.get(0).setName(intent.getStringExtra(CommManager.REC_NAME));
+                recsAdapter.notifyDataSetChanged();
                 return;
             }
 

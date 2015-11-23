@@ -44,10 +44,6 @@ public class MobileMessengerService extends WearableListenerService implements
 
     private static Intent checkResponseIntent; // send to check if audio activity is ready to receive recordings
     private static Queue<Intent> pendingRecordings = new LinkedList<>(); // holds recordings and sends them when audio activity responds
-    private static Queue<String> pendingNames = new LinkedList<>();
-
-    private static Recording lastRecording;
-    private static String lastRecordingName;
 
     @Override
     public void onCreate() {
@@ -85,11 +81,10 @@ public class MobileMessengerService extends WearableListenerService implements
     public void onMessageReceived(MessageEvent messageEvent) {
         Log.d(TAG, messageEvent.getPath());
         if (messageEvent.getPath().equals(CommManager.SPEECH_RECOGNITION_RESULT)) {
-            lastRecordingName = new String(messageEvent.getData());
-            if (lastRecording == null) {
-                return;
-            }
-            addRecordingToQueue();
+            Intent nameIntent = new Intent(CommManager.AUDIO_INTENT);
+            nameIntent.putExtra(CommManager.REC_FILEPATH, CommManager.RENAME_PATH);
+            nameIntent.putExtra(CommManager.REC_NAME, new String(messageEvent.getData()));
+            pendingRecordings.add(nameIntent);
             sendPendingRecordings();
         }
     }
@@ -161,15 +156,10 @@ public class MobileMessengerService extends WearableListenerService implements
                 }
                 Channel.GetInputStreamResult getInputStreamResult = channel.getInputStream(mApiClient).await();
                 InputStream inputStream = getInputStreamResult.getInputStream();
-                if (lastRecording != null) {
-                    addRecordingToQueue();
-                }
-                lastRecording = new Recording(inputStream, rootPath, CommManager.currentLocation, recDate);
-                Log.d(TAG, "Recording " + lastRecording.getFilePath() + " created!");
-                if (lastRecordingName != null) {
-                    addRecordingToQueue();
-                    sendPendingRecordings();
-                }
+                Recording newRec = new Recording(inputStream, rootPath, CommManager.currentLocation, recDate);
+                Log.d(TAG, "Recording " + newRec.getFilePath() + " created!");
+                addRecordingToQueue(newRec);
+                sendPendingRecordings();
             }
         }, "RecordFile Thread");
         recordThread.start();
@@ -177,35 +167,30 @@ public class MobileMessengerService extends WearableListenerService implements
         //getCurrentPlaceName();
     }
 
-    private void addRecordingToQueue() {
-        if (lastRecording == null) {
+    private void addRecordingToQueue(Recording recording) {
+        if (recording == null) {
             Log.e(TAG, "Attempted to add null recording!");
             return;
         }
-        if (lastRecordingName != null && !lastRecordingName.equals("")) {
-            lastRecording.setName(capitalizeWords(lastRecordingName));
-        }
-        else if (placeName != null && !placeName.equals("")) {
-            lastRecording.setName(placeName);
+        if (placeName != null && !placeName.equals("")) {
+            recording.setName(placeName);
         }
         else {
-            lastRecording.setName(lastRecording.getDateString());
+            recording.setName(recording.getDateString());
         }
 
-        Log.d(TAG, "Adding recording " + lastRecording.getFilePath() + " to queue");
+        Log.d(TAG, "Adding recording " + recording.getFilePath() + " to queue");
 
         Intent audioIntent = new Intent(CommManager.AUDIO_INTENT);
-        audioIntent.putExtra(CommManager.REC_FILEPATH, lastRecording.getFilePath());
-        audioIntent.putExtra(CommManager.REC_LAT, lastRecording.getLocation().getLatitude());
-        audioIntent.putExtra(CommManager.REC_LNG, lastRecording.getLocation().getLongitude());
-        audioIntent.putExtra(CommManager.REC_NAME, lastRecording.getName());
+        audioIntent.putExtra(CommManager.REC_FILEPATH, recording.getFilePath());
+        audioIntent.putExtra(CommManager.REC_LAT, recording.getLocation().getLatitude());
+        audioIntent.putExtra(CommManager.REC_LNG, recording.getLocation().getLongitude());
+        audioIntent.putExtra(CommManager.REC_NAME, recording.getName());
         //audioIntent.putExtra(CommManager.REC_PLACE, lastRecordingName);
-        audioIntent.putExtra(CommManager.REC_DATE, lastRecording.getDateStorageString());
+        audioIntent.putExtra(CommManager.REC_DATE, recording.getDateStorageString());
 
         pendingRecordings.add(audioIntent);
 
-        lastRecording = null;
-        lastRecordingName = null;
         placeName = "";
     }
 

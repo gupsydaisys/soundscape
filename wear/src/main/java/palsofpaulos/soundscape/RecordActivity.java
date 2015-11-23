@@ -143,7 +143,6 @@ public class RecordActivity extends WearableActivity {
                 startSpeechRecognition();
             }
             else {
-                WearMessengerService.sendMessage(mApiClient, CommManager.SPEECH_RECOGNITION_RESULT, "");
                 finish();
             }
         }
@@ -239,7 +238,7 @@ public class RecordActivity extends WearableActivity {
         recognizerIntent.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 5);
 
         startActivityForResult(recognizerIntent, SPEECH_REQUEST_CODE);
-        //speechRecognizer.startListening(recognizerIntent);
+        speechRecognizer.startListening(recognizerIntent);
     }
 
     @Override
@@ -255,9 +254,6 @@ public class RecordActivity extends WearableActivity {
                 }
 
                 WearMessengerService.sendMessage(mApiClient, CommManager.SPEECH_RECOGNITION_RESULT, spokenName);
-            }
-            else {
-                WearMessengerService.sendMessage(mApiClient, CommManager.SPEECH_RECOGNITION_RESULT, "");
             }
         }
         super.onActivityResult(requestCode, resultCode, data);
