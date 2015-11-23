@@ -45,8 +45,8 @@ public class MobileMessengerService extends WearableListenerService implements
     private static Intent checkResponseIntent; // send to check if audio activity is ready to receive recordings
     private static Queue<Intent> pendingRecordings = new LinkedList<>(); // holds recordings and sends them when audio activity responds
 
-    private Recording lastRecording;
-    private String lastRecordingName;
+    private static Recording lastRecording;
+    private static String lastRecordingName;
 
     @Override
     public void onCreate() {
@@ -90,9 +90,9 @@ public class MobileMessengerService extends WearableListenerService implements
             }
             lastRecordingName = new String(messageEvent.getData());
             addRecordingToQueue(lastRecording);
-            lastRecording = null;
             sendPendingRecordings();
 
+            lastRecording = null;
             lastRecordingName = "";
             placeName = "";
         }
