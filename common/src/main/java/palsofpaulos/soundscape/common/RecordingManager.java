@@ -29,6 +29,8 @@ public class RecordingManager {
 
     public static final String SAVED_RECS = "ss_rec_list";
 
+    public static int lastId = 0;
+
     // returns date if string is properly formatted, otherwise the current date
     public static Date recDateFromString(String dateString) {
         Date recDate;

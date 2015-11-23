@@ -24,7 +24,6 @@ public class Recording {
 
     private static final String TAG = "Recording Object";
     private static final int NOTIFICATION_PERIOD = 500;
-    private static int lastId = 0;
 
     private String filePath;
     private File file;
@@ -63,7 +62,7 @@ public class Recording {
     // Constructor used to create a new recording from a data inputStream
     public Recording(InputStream inputStream, String pathName, Location location, Date date) {
 
-        this.id = lastId++;
+        this.id = RecordingManager.lastId++;
         this.location = location;
         this.dateCreated = Calendar.getInstance().getTime();
         this.filePath = pathName + "_id" + id + ".pcm";
@@ -165,7 +164,7 @@ public class Recording {
     }
 
     public static void setLastId(int lastId) {
-        Recording.lastId = lastId;
+        RecordingManager.lastId = lastId;
     }
 
     public void setName(String name) { this.name = name; }

@@ -105,9 +105,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_audio);
 
-        // start MobileMessengerService to update location and recordings
-        mobileMessengerIntent = new Intent(this, MobileMessengerService.class);
-        startService(mobileMessengerIntent);
         sendBroadcast(responseIntent);
 
         // get recordings from saved preferences and populate listview
@@ -178,8 +175,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(cameraLoc, 10);
         map.moveCamera(cameraUpdate);
-
-        stopService(mobileMessengerIntent);
     }
 
     private void addMarkerForRec(int position) {
@@ -308,6 +303,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void onFinished() {
                 setPlayButtons();
+                setProgressBars(progressBar.getMax());
                 oldProgress = 0;
                 if (playLayout.getVisibility() != View.VISIBLE && (playingRec == null || playingRec.isDeleted())) {
                     closePlayBar();
