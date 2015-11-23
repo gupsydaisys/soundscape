@@ -10,8 +10,6 @@ import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
-import palsofpaulos.soundscape.common.WearAPIManager;
-
 public class WearMessengerService extends WearableListenerService {
 
     public static final String RECORD_ACTIVITY = "/record_activity";

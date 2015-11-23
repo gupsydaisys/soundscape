@@ -29,8 +29,8 @@ import java.util.Date;
 import java.util.LinkedList;
 import java.util.Queue;
 
+import palsofpaulos.soundscape.common.CommManager;
 import palsofpaulos.soundscape.common.Recording;
-import palsofpaulos.soundscape.common.WearAPIManager;
 
 public class MobileMessengerService extends WearableListenerService implements
         GoogleApiClient.ConnectionCallbacks,
@@ -54,10 +54,10 @@ public class MobileMessengerService extends WearableListenerService implements
 
         Log.d(TAG, "Service created!");
 
-        checkResponseIntent = new Intent(WearAPIManager.AUDIO_INTENT);
-        checkResponseIntent.putExtra(WearAPIManager.REC_FILEPATH, WearAPIManager.NULL_REC_PATH);
+        checkResponseIntent = new Intent(CommManager.AUDIO_INTENT);
+        checkResponseIntent.putExtra(CommManager.REC_FILEPATH, CommManager.NULL_REC_PATH);
 
-        registerReceiver(responseReceiver, new IntentFilter(WearAPIManager.AUDIO_RESPONSE_INTENT));
+        registerReceiver(responseReceiver, new IntentFilter(CommManager.AUDIO_RESPONSE_INTENT));
         sendPendingRecordings();
 
         initializeGoogleApiClient();
@@ -84,7 +84,7 @@ public class MobileMessengerService extends WearableListenerService implements
     @Override
     public void onMessageReceived(MessageEvent messageEvent) {
         Log.d(TAG, messageEvent.getPath());
-        if (messageEvent.getPath().equals(WearAPIManager.SPEECH_RECOGNITION_RESULT)) {
+        if (messageEvent.getPath().equals(CommManager.SPEECH_RECOGNITION_RESULT)) {
             if (lastRecording == null) {
                 return;
             }
@@ -100,7 +100,7 @@ public class MobileMessengerService extends WearableListenerService implements
 
     @Override
     public void onChannelOpened(final Channel channel) {
-        if (channel.getPath().equals(WearAPIManager.RECORD_CHANNEL)) {
+        if (channel.getPath().equals(CommManager.RECORD_CHANNEL)) {
             getRecordingFromChannel(channel);
         }
     }
@@ -110,8 +110,8 @@ public class MobileMessengerService extends WearableListenerService implements
 
         LocationRequest locationRequest = LocationRequest.create()
                 .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(WearAPIManager.LOCATION_UPDATE_INTERVAL)
-                .setFastestInterval(WearAPIManager.LOCATION_UPDATE_FASTEST);
+                .setInterval(CommManager.LOCATION_UPDATE_INTERVAL)
+                .setFastestInterval(CommManager.LOCATION_UPDATE_FASTEST);
 
         LocationServices.FusedLocationApi
                 .requestLocationUpdates(mApiClient, locationRequest, this)
@@ -128,7 +128,7 @@ public class MobileMessengerService extends WearableListenerService implements
     @Override
     public void onLocationChanged(Location location) {
         Log.d(TAG, location.toString());
-        WearAPIManager.currentLocation = location;
+        CommManager.currentLocation = location;
     }
 
     @Override
@@ -151,6 +151,8 @@ public class MobileMessengerService extends WearableListenerService implements
     /* Recording Handling Methods */
 
     private void getRecordingFromChannel(final Channel channel) {
+        Log.d(TAG, "Getting new recording!");
+
         final String rootPath = this.getFilesDir().getPath();
         final Date recDate = Calendar.getInstance().getTime();
 
@@ -165,7 +167,8 @@ public class MobileMessengerService extends WearableListenerService implements
                 if (lastRecording != null) {
                     addRecordingToQueue(lastRecording);
                 }
-                lastRecording = new Recording(inputStream, rootPath, WearAPIManager.currentLocation, recDate);
+                lastRecording = new Recording(inputStream, rootPath, CommManager.currentLocation, recDate);
+                Log.d(TAG, "Recording " + lastRecording.getDateStorageString() + " created!");
             }
         }, "RecordFile Thread");
         recordThread.start();
@@ -188,13 +191,13 @@ public class MobileMessengerService extends WearableListenerService implements
             recording.setName(recording.getDateString());
         }
 
-        Intent audioIntent = new Intent(WearAPIManager.AUDIO_INTENT);
-        audioIntent.putExtra(WearAPIManager.REC_FILEPATH, recording.getFilePath());
-        audioIntent.putExtra(WearAPIManager.REC_LAT, recording.getLocation().getLatitude());
-        audioIntent.putExtra(WearAPIManager.REC_LNG, recording.getLocation().getLongitude());
-        audioIntent.putExtra(WearAPIManager.REC_NAME, recording.getName());
-        //audioIntent.putExtra(WearAPIManager.REC_PLACE, lastRecordingName);
-        audioIntent.putExtra(WearAPIManager.REC_DATE, recording.getDateStorageString());
+        Intent audioIntent = new Intent(CommManager.AUDIO_INTENT);
+        audioIntent.putExtra(CommManager.REC_FILEPATH, recording.getFilePath());
+        audioIntent.putExtra(CommManager.REC_LAT, recording.getLocation().getLatitude());
+        audioIntent.putExtra(CommManager.REC_LNG, recording.getLocation().getLongitude());
+        audioIntent.putExtra(CommManager.REC_NAME, recording.getName());
+        //audioIntent.putExtra(CommManager.REC_PLACE, lastRecordingName);
+        audioIntent.putExtra(CommManager.REC_DATE, recording.getDateStorageString());
 
         pendingRecordings.add(audioIntent);
     }

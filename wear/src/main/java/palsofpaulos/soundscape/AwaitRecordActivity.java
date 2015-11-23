@@ -12,8 +12,7 @@ import android.widget.TextView;
 import java.text.SimpleDateFormat;
 import java.util.Locale;
 
-import palsofpaulos.soundscape.common.RecordingManager;
-import palsofpaulos.soundscape.common.WearAPIManager;
+import palsofpaulos.soundscape.common.CommManager;
 
 public class AwaitRecordActivity extends WearableActivity {
 
@@ -65,7 +64,7 @@ public class AwaitRecordActivity extends WearableActivity {
                 };
 
                 if (touches == 3) {
-                    recordIntent.putExtra(WearAPIManager.SPEECH_FOR_NAME_EXTRA, useSpeechForName);
+                    recordIntent.putExtra(CommManager.SPEECH_FOR_NAME_EXTRA, useSpeechForName);
                     startActivity(recordIntent);
                 }
             }

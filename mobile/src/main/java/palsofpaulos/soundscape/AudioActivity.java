@@ -42,10 +42,10 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 
+import palsofpaulos.soundscape.common.CommManager;
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.RecordingException;
 import palsofpaulos.soundscape.common.RecordingManager;
-import palsofpaulos.soundscape.common.WearAPIManager;
 import palsofpaulos.soundscape.common.LayoutAnimations.*;
 
 public class AudioActivity extends FragmentActivity implements OnMapReadyCallback {
@@ -98,7 +98,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private ArrayAdapter<Recording> recsAdapter;
     private Recording playingRec; // references the currently playing recording, null otherwise
     private int oldProgress; // playhead progress is reset to 0 on pause, this stores the progress before reset
-    private Intent responseIntent = new Intent(WearAPIManager.AUDIO_RESPONSE_INTENT);
+    private Intent responseIntent = new Intent(CommManager.AUDIO_RESPONSE_INTENT);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -130,7 +130,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
         initializeButtons();
 
-        registerReceiver(audioReceiver, new IntentFilter(WearAPIManager.AUDIO_INTENT));
+        registerReceiver(audioReceiver, new IntentFilter(CommManager.AUDIO_INTENT));
 
         MapFragment mapFragment = (MapFragment) getFragmentManager().findFragmentById(R.id.recordings_map);
         mapFragment.getMapAsync(this);
@@ -174,7 +174,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
                 return false;
             }
         });
-        LatLng cameraLoc = new LatLng(WearAPIManager.currentLocation.getLatitude(), WearAPIManager.currentLocation.getLongitude());
+        LatLng cameraLoc = new LatLng(CommManager.currentLocation.getLatitude(), CommManager.currentLocation.getLongitude());
 
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(cameraLoc, 10);
         map.moveCamera(cameraUpdate);
@@ -199,21 +199,21 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
             sendBroadcast(responseIntent);
 
-            final String filePath = intent.getStringExtra(WearAPIManager.REC_FILEPATH);
+            final String filePath = intent.getStringExtra(CommManager.REC_FILEPATH);
             // a null recording request was sent, indicating it was just looking for a response
-            if (filePath.equals(WearAPIManager.NULL_REC_PATH)) {
+            if (filePath.equals(CommManager.NULL_REC_PATH)) {
                 return;
             }
 
             final Location recLoc = new Location("");
-            double latitude = intent.getDoubleExtra(WearAPIManager.REC_LAT, 0);
-            double longitude = intent.getDoubleExtra(WearAPIManager.REC_LNG, 0);
+            double latitude = intent.getDoubleExtra(CommManager.REC_LAT, 0);
+            double longitude = intent.getDoubleExtra(CommManager.REC_LNG, 0);
             recLoc.setLatitude(latitude);
             recLoc.setLongitude(longitude);
-            final Date recDate = RecordingManager.recDateFromString(intent.getStringExtra(WearAPIManager.REC_DATE));
+            final Date recDate = RecordingManager.recDateFromString(intent.getStringExtra(CommManager.REC_DATE));
 
             Recording newRec = new Recording(filePath, recLoc, recDate);
-            newRec.setName(intent.getStringExtra(WearAPIManager.REC_NAME));
+            newRec.setName(intent.getStringExtra(CommManager.REC_NAME));
 
 
             recs.add(0, newRec);
@@ -571,7 +571,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             cameraLoc = new LatLng(playingRec.getLocation().getLatitude(), playingRec.getLocation().getLongitude());
         }
         else {
-            cameraLoc = new LatLng(WearAPIManager.currentLocation.getLatitude(), WearAPIManager.currentLocation.getLongitude());
+            cameraLoc = new LatLng(CommManager.currentLocation.getLatitude(), CommManager.currentLocation.getLongitude());
         }
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(cameraLoc, 15);
         map.moveCamera(cameraUpdate);
