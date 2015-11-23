@@ -125,10 +125,10 @@ public class AwaitRecordActivity extends WearableActivity {
             return;
         }
         if (useSpeechForName) {
-            mSpeechForNameText.setText("Using Speech to Text");
+            mSpeechForNameText.setText("Speech to Text Naming Enabled");
         }
         else {
-            mSpeechForNameText.setText("Not using Speech to Text");
+            mSpeechForNameText.setText("Speech to Text Naming Disabled");
         }
     }
 }

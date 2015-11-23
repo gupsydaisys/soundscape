@@ -78,7 +78,10 @@ public class RecordActivity extends WearableActivity {
         if (mApiClient.isConnected()) {
             mApiClient.disconnect();
         }
-        speechRecognizer.destroy();
+        if (speechRecognizer != null) {
+            speechRecognizer.destroy();
+        }
+
     }
 
 
