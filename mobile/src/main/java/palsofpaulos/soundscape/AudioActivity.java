@@ -95,7 +95,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private ArrayAdapter<Recording> recsAdapter;
     private Recording playingRec; // references the currently playing recording, null otherwise
-    private int oldProgress; // playhead progress is reset to 0 on pause, this stores the progress before reset
     private Intent responseIntent = new Intent(CommManager.AUDIO_RESPONSE_INTENT);
 
     @Override
@@ -123,7 +122,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         seekCurrentTime = (TextView) findViewById(R.id.seek_current_time);
         seekTotalTime = (TextView) findViewById(R.id.seek_total_time);
         playTextBig = (TextView) findViewById(R.id.play_text_big);
-        oldProgress = 0;
 
         initializeButtons();
 
@@ -301,7 +299,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void onUpdate(final int progress) {
                 if (!blockSeekUpdate) {
-                    setProgressBars(oldProgress + progress);
+                    setProgressBars(progress);
                     seekCurrentTime.setText(currentPlayTime());
                 }
             }
@@ -309,7 +307,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             public void onFinished() {
                 setPlayButtons();
                 setProgressBars(progressBar.getMax());
-                oldProgress = 0;
                 if (playLayout.getVisibility() != View.VISIBLE && (playingRec == null || playingRec.isDeleted())) {
                     closePlayBar();
                 }
@@ -383,7 +380,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 blockSeekUpdate = false;
-                oldProgress = seekBar.getProgress();
             }
         });
     }
@@ -400,7 +396,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             playingRec.stop();
             preventPlayBarClose = false;
         }
-        //oldProgress = 0;
 
         playingRec = rec;
 
@@ -409,6 +404,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         }
 
         rec.play(playListener);
+
         // Setup and display audio play bar
         setPauseButtons();
         setPlayText(rec.getName());
@@ -428,7 +424,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     }
 
     public String currentPlayTime() {
-        int playHead = playingRec.currentPlayTime(oldProgress);
+        int playHead = playingRec.currentPlayTime();
         return String.format("%d:%02d", playHead / 60, playHead % 60);
     }
 

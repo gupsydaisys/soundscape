@@ -35,6 +35,7 @@ public class Recording {
 
     private PlayAudioTask playTask;
     private boolean isPlaying;
+    private int oldProgress = 0;
 
     private boolean isDeleted = false;
     private boolean isStopped = false;
@@ -128,7 +129,7 @@ public class Recording {
     }
 
 
-    public int currentPlayTime(int oldProgress) {
+    public int currentPlayTime() {
         return (int) ((oldProgress + playTask.getPlayHead()) / RecordingManager.SAMPLERATE);
     }
 
@@ -169,9 +170,9 @@ public class Recording {
 
     public void setName(String name) { this.name = name; }
 
-    public void setPlayHead(int position) {
+    public void setPlayHead(int progress) {
         if (playTask != null && playTask.track != null) {
-            playTask.setPlayHead(position);
+            playTask.setPlayHead(progress);
         }
     }
 
@@ -206,6 +207,7 @@ public class Recording {
             playTask.play();
         }
         else {
+            oldProgress = 0;
             playTask = new PlayAudioTask(listener);
             playTask.execute();
         }
@@ -220,6 +222,7 @@ public class Recording {
     public void stop() {
         if (playTask != null) {
             playTask.stop();
+            oldProgress = 0;
         }
     }
 
@@ -230,7 +233,8 @@ public class Recording {
     }
 
 
-    /* An asynchronous task to handle playing the recording.
+    /**
+     * An asynchronous task to handle playing the recording.
      *
      * Executing a PlayAudioTask will play the recording. If the
      * Task is instantiated with a postPlayListener then you can
@@ -294,7 +298,7 @@ public class Recording {
                 @Override
                 public void onPeriodicNotification(AudioTrack track) {
                     if (track.getState() == AudioTrack.STATE_INITIALIZED) {
-                        playListener.onUpdate(track.getPlaybackHeadPosition());
+                        playListener.onUpdate(oldProgress + track.getPlaybackHeadPosition());
                     }
                 }
 
@@ -372,14 +376,19 @@ public class Recording {
 
         private void setPlayHead(int position) {
             if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
+                oldProgress = position;
                 if (track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
                     track.stop();
+                    track.reloadStaticData();
                     track.setPlaybackHeadPosition(position);
+                    track.setNotificationMarkerPosition((int) file.length() / 2 - position);
                     track.play();
                 }
                 else {
+                    track.stop();
                     track.reloadStaticData();
                     track.setPlaybackHeadPosition(position);
+                    track.setNotificationMarkerPosition((int) file.length() / 2 - position);
                 }
             }
             else {
