@@ -1,4 +1,4 @@
-<LinearLayout
+<LinearLayout xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
@@ -12,49 +12,83 @@
 
         <LinearLayout
             android:id="@+id/recordings_layout"
-            xmlns:android="http://schemas.android.com/apk/res/android"
-            xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
-            android:orientation="vertical"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
-            tools:context=".MainActivity"
-            android:background="@drawable/blue_black_texture">
+            android:orientation="vertical">
 
             <LinearLayout
-                android:layout_width="match_parent"
-                android:orientation="horizontal"
-                android:layout_height="wrap_content"
-                android:background="@color/primaryDark">
+                android:id="@+id/recordings_list"
+                xmlns:android="http://schemas.android.com/apk/res/android"
+                xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
+                android:orientation="vertical"
+                android:layout_height="match_parent"
+                tools:context=".MainActivity"
+                android:background="@drawable/blue_black_texture">
 
-                <TextView
-                    android:id="@+id/headerRecordings"
-                    android:layout_width="wrap_content"
+                <RelativeLayout
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:textStyle="bold"
-                    android:textSize="22sp"
-                    android:textColor="@color/white"
-                    android:padding="10dp"
-                    android:text="@string/recording_header" />
+                    android:background="@color/primaryDark">
+
+                    <ImageButton
+                        android:id="@+id/maps_button"
+                        android:layout_width="50dip"
+                        android:layout_height="50dip"
+                        android:src="@drawable/maps_ic"
+                        android:scaleType="fitCenter"
+                        android:layout_alignParentStart="true"/>
+
+                    <TextView
+                        android:id="@+id/headerRecordings"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:textStyle="bold"
+                        android:textSize="22sp"
+                        android:textColor="@color/white"
+                        android:padding="10dp"
+                        android:text="@string/recording_header"
+                        android:layout_centerHorizontal="true"/>
+
+                </RelativeLayout>
+
+                <ListView
+                    android:id="@+id/listRecordings"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@color/primaryLight"/>
 
                 <View
-                    android:layout_width="0dip"
-                    android:layout_height="match_parent"
-                    android:layout_weight="1"/>
+                    android:layout_width="match_parent"
+                    android:layout_height="1dip"
+                    android:background="@color/primaryDark" />
 
             </LinearLayout>
 
-            <ListView
-                android:id="@+id/listRecordings"
+            <FrameLayout
+                android:id="@+id/map_layout"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:background="@color/primaryLight"/>
+                android:layout_height="match_parent">
 
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="1dip"
-                android:background="@color/primaryDark" />
+                <fragment xmlns:android="http://schemas.android.com/apk/res/android"
+                    class="com.google.android.gms.maps.MapFragment"
+                    android:id="@+id/recordings_map"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:visibility="gone"
+                    tools:layout="@layout/activity_audio" />
+
+                <ImageButton
+                    android:id="@+id/list_button"
+                    android:layout_width="50dip"
+                    android:layout_height="50dip"
+                    android:src="@drawable/list_ic"
+                    android:scaleType="fitCenter"
+                    android:layout_gravity="top|start"/>
+            </FrameLayout>
+
 
         </LinearLayout>
+
 
         <RelativeLayout
             android:id="@+id/play_bar"
@@ -71,14 +105,13 @@
                 android:progressDrawable="@drawable/audio_progress"/>
 
             <ImageView
-                android:id="@+id/play_pause_bar"
-                android:layout_width="30dip"
-                android:layout_height="30dip"
-                android:layout_marginLeft="10dip"
-                android:layout_marginRight="10dip"
-                android:src="@drawable/play_button"
+                android:id="@+id/up_arrow"
+                android:layout_width="50dip"
+                android:layout_height="50dip"
+                android:background="@drawable/arrow_up_shadow"
+                android:layout_centerHorizontal="true"
                 android:layout_centerVertical="true"
-                android:layout_alignParentStart="true" />
+                android:layout_alignParentStart="true"/>
 
             <LinearLayout
                 android:id="@+id/bar_info"
@@ -86,9 +119,9 @@
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:gravity="center_vertical"
-                android:layout_toRightOf="@id/play_pause_bar">
+                android:layout_toRightOf="@id/up_arrow">
 
-                <TextView android:id="@+id/play_text"
+                <TextView android:id="@+id/play_text_bar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:textColor="@color/white"
@@ -103,6 +136,18 @@
                     android:paddingBottom="2dip"/>
 
             </LinearLayout>
+
+            <ImageView
+                android:id="@+id/play_pause_bar"
+                android:layout_width="30dip"
+                android:layout_height="30dip"
+                android:layout_marginLeft="10dip"
+                android:layout_marginRight="10dip"
+                android:src="@drawable/play_button"
+                android:layout_centerVertical="true"
+                android:layout_alignParentEnd="true" />
+
+
         </RelativeLayout>
     </LinearLayout>
 
@@ -122,6 +167,7 @@
                 android:layout_height="50dip"
                 android:background="@drawable/arrow_down_shadow"
                 android:layout_centerHorizontal="true"
+                android:layout_centerVertical="true"
                 android:layout_alignParentStart="true"/>
         </RelativeLayout>
 
@@ -146,9 +192,48 @@
             android:layout_centerHorizontal="true"
             android:layout_below="@id/play_pause_big"/>
 
+        <TextView
+            android:id="@+id/seek_current_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="10dip"
+            android:textColor="@color/primaryBackground"
+            android:layout_below="@id/seek_bar"
+            android:layout_alignParentStart="true"/>
+
+        <TextView
+            android:id="@+id/seek_total_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingEnd="10dip"
+            android:textColor="@color/primaryBackground"
+            android:layout_below="@id/seek_bar"
+            android:layout_alignParentEnd="true"/>
+
+        <TextView
+            android:id="@+id/play_text_big"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:layout_marginTop="40dip"
+            android:layout_below="@id/seek_bar" />
+
+        <EditText
+            android:id="@+id/play_text_edit"
+            android:focusableInTouchMode="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:textColor="@color/white"
+            android:textSize="20sp"
+            android:inputType="textCapWords"
+            android:layout_marginTop="40dip"
+            android:layout_below="@id/seek_bar"
+            android:visibility="gone"/>
+
     </RelativeLayout>
-
-
 </LinearLayout>
 
 

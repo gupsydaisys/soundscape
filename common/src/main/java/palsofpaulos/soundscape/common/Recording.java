@@ -1,5 +1,6 @@
 package palsofpaulos.soundscape.common;
 
+import android.location.Location;
 import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.os.AsyncTask;
@@ -15,29 +16,34 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
+import java.util.Calendar;
+import java.util.Date;
 
 
 public class Recording {
 
     private static final String TAG = "Recording Object";
     private static final int NOTIFICATION_PERIOD = 500;
-    private static int lastId = 0;
 
     private String filePath;
     private File file;
 
     private int id;
     private String name;
-    private byte[] data;
-    private LatLng location;
+    private Date dateCreated;
+    private Location location;
 
     private PlayAudioTask playTask;
     private boolean isPlaying;
+    private int oldProgress = 0;
 
     private boolean isDeleted = false;
     private boolean isStopped = false;
 
-    public Recording(String filePath) {
+    // Constructor used to rebuild a stored recording
+    public Recording(String filePath, Location location, Date date) {
+        this.location = location;
+        this.dateCreated = date;
         this.filePath = filePath;
         this.file = new File(filePath);
         try {
@@ -54,11 +60,15 @@ public class Recording {
         truncateFile();
     }
 
-    public Recording(InputStream inputStream, String pathName) {
+    // Constructor used to create a new recording from a data inputStream
+    public Recording(InputStream inputStream, String pathName, Location location, Date date) {
 
-        this.id = lastId++;
+        this.id = RecordingManager.lastId++;
+        this.location = location;
+        this.dateCreated = Calendar.getInstance().getTime();
         this.filePath = pathName + "_id" + id + ".pcm";
         this.file = new File(filePath);
+        this.location = (location != null ? location : RecordingManager.DEFAULT_LOCATION);
 
         OutputStream outputStream = null;
         try {
@@ -92,21 +102,40 @@ public class Recording {
     }
 
     /* Getters and Setters */
-    public String getFilePath() { return filePath; }
+    public String getFilePath() { return this.filePath; }
 
-    public File getFile() { return file; }
+    public File getFile() { return this.file; }
 
-    public int getId() { return id; }
+    public int getId() { return this.id; }
+
+    public String getName() { return this.name; }
 
     public boolean isPlaying() { return this.isPlaying; }
 
     public boolean isDeleted() { return this.isDeleted; }
 
-    public PlayAudioTask getPlayTask() { return playTask; }
+    public PlayAudioTask getPlayTask() { return this.playTask; }
+
+    public Location getLocation() { return this.location; }
+
+    public Date getDate() { return this.dateCreated; }
+
+    public String getDateString() {
+        return RecordingManager.PRINT_DATE_FORMAT.format(this.dateCreated);
+    }
+
+    public String getDateStorageString() {
+        return RecordingManager.STORE_DATE_FORMAT.format(this.dateCreated);
+    }
+
+
+    public int currentPlayTime() {
+        return (int) ((oldProgress + playTask.getPlayHead()) / RecordingManager.SAMPLERATE);
+    }
 
     // returns the length of the recording in seconds
     public int length() {
-        return (int) (file.length() / RecordingManager.SAMPLERATE);
+        return (int) (file.length() / 2 / RecordingManager.SAMPLERATE);
     }
 
     public int frameLength() {
@@ -119,9 +148,9 @@ public class Recording {
         int min = (len % 3600) / 60;
         int sec = len % 60;
         if (hrs > 0) {
-            return String.format("%d:%d:%d", hrs, min, sec);
+            return String.format("%d:%d:%02d", hrs, min, sec);
         }
-        return String.format("%d:%d", min, sec);
+        return String.format("%d:%02d", min, sec);
     }
     // limits the file to MAX_LENGTH
     private void truncateFile() {
@@ -136,12 +165,14 @@ public class Recording {
     }
 
     public static void setLastId(int lastId) {
-        Recording.lastId = lastId;
+        RecordingManager.lastId = lastId;
     }
 
-    public void setPlayHead(int position) {
+    public void setName(String name) { this.name = name; }
+
+    public void setPlayHead(int progress) {
         if (playTask != null && playTask.track != null) {
-            playTask.setPlayHead(position);
+            playTask.setPlayHead(progress);
         }
     }
 
@@ -176,6 +207,7 @@ public class Recording {
             playTask.play();
         }
         else {
+            oldProgress = 0;
             playTask = new PlayAudioTask(listener);
             playTask.execute();
         }
@@ -190,6 +222,7 @@ public class Recording {
     public void stop() {
         if (playTask != null) {
             playTask.stop();
+            oldProgress = 0;
         }
     }
 
@@ -200,7 +233,8 @@ public class Recording {
     }
 
 
-    /* An asynchronous task to handle playing the recording.
+    /**
+     * An asynchronous task to handle playing the recording.
      *
      * Executing a PlayAudioTask will play the recording. If the
      * Task is instantiated with a postPlayListener then you can
@@ -264,7 +298,7 @@ public class Recording {
                 @Override
                 public void onPeriodicNotification(AudioTrack track) {
                     if (track.getState() == AudioTrack.STATE_INITIALIZED) {
-                        playListener.onUpdate(track.getPlaybackHeadPosition());
+                        playListener.onUpdate(oldProgress + track.getPlaybackHeadPosition());
                     }
                 }
 
@@ -333,16 +367,28 @@ public class Recording {
             playListener.onFinished();
         }
 
+        private int getPlayHead() {
+            if (track == null) {
+                return 0;
+            }
+            return track.getPlaybackHeadPosition();
+        }
+
         private void setPlayHead(int position) {
             if (track != null && track.getState() == AudioTrack.STATE_INITIALIZED) {
+                oldProgress = position;
                 if (track.getPlayState() == AudioTrack.PLAYSTATE_PLAYING) {
                     track.stop();
+                    track.reloadStaticData();
                     track.setPlaybackHeadPosition(position);
+                    track.setNotificationMarkerPosition((int) file.length() / 2 - position);
                     track.play();
                 }
                 else {
+                    track.stop();
                     track.reloadStaticData();
                     track.setPlaybackHeadPosition(position);
+                    track.setNotificationMarkerPosition((int) file.length() / 2 - position);
                 }
             }
             else {

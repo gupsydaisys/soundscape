@@ -6,4 +6,5 @@
 
     <string name="recording_header">Recordings</string>
     <string name="title_activity_rec_play">RecPlayActivity</string>
+    <string name="title_activity_map">MapActivity</string>
 </resources>

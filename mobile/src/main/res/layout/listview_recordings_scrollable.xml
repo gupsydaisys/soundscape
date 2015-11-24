@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<HorizontalScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/h_scroll_view"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:fillViewport="true"
+    android:scrollbars="none"
+    android:clickable="false"
+    android:focusable="false"
+    android:focusableInTouchMode="false">
+    <LinearLayout
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        android:id="@+id/h_scroll_view_container"
+        android:layout_width="wrap_content"
+        android:layout_height="60dip"
+        android:orientation="horizontal"
+        android:descendantFocusability="afterDescendants">
+
+        <LinearLayout
+            android:id="@+id/rec_data"
+            android:orientation="vertical"
+            android:layout_width="380dip"
+            android:layout_height="match_parent"
+            android:background="@drawable/audio_list_item"
+            android:paddingStart="10dip"
+            android:paddingEnd="10dip"
+            android:clickable="true">
+
+            <TextView android:id="@+id/rec_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:paddingTop="2dip"
+                android:paddingBottom="2dip"/>
+
+            <TextView android:id="@+id/rec_length"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:textColor="@color/primaryBackground"
+                android:paddingBottom="2dip"/>
+
+        </LinearLayout>
+
+        <RelativeLayout
+            android:id="@+id/delete_button"
+            android:layout_width="50dip"
+            android:layout_height="match_parent"
+            android:background="@drawable/audio_delete_button"
+            android:clickable="true">
+
+            <ImageView
+                android:background="@drawable/garbage"
+                android:backgroundTint="@color/charcoal"
+                android:text="Delete"
+                android:textSize="15sp"
+                android:layout_centerVertical="true"
+                android:layout_centerHorizontal="true"
+                android:layout_gravity="end"
+                android:gravity="center"
+                android:textColor="@color/white"
+                android:layout_width="30dip"
+                android:layout_height="30dip" />
+        </RelativeLayout>
+    </LinearLayout>
+</HorizontalScrollView>
