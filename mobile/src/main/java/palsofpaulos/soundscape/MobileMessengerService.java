@@ -83,7 +83,7 @@ public class MobileMessengerService extends WearableListenerService implements
         if (messageEvent.getPath().equals(CommManager.SPEECH_RECOGNITION_RESULT)) {
             Intent nameIntent = new Intent(CommManager.AUDIO_INTENT);
             nameIntent.putExtra(CommManager.REC_FILEPATH, CommManager.RENAME_PATH);
-            nameIntent.putExtra(CommManager.REC_NAME, new String(messageEvent.getData()));
+            nameIntent.putExtra(CommManager.REC_NAME, capitalizeWords(new String(messageEvent.getData())));
             pendingRecordings.add(nameIntent);
             sendPendingRecordings();
         }
