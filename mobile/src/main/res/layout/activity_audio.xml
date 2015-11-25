@@ -233,6 +233,34 @@
             android:layout_below="@id/seek_bar"
             android:visibility="gone"/>
 
+        <!-- Rating View-->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginTop="80dip"
+            android:layout_centerHorizontal="true"
+            android:layout_below="@id/seek_bar">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:text = "Rating: "
+                android:layout_alignParentStart="true"/>
+
+            <EditText
+                android:id="@+id/rating"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/white"
+                android:textSize="20sp"
+                android:layout_alignParentEnd="true"/>
+
+        </LinearLayout>
+
+
     </RelativeLayout>
 </LinearLayout>
 

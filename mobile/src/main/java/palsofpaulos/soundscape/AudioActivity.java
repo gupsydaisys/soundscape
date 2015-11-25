@@ -16,6 +16,7 @@ import android.view.View;
 import android.view.animation.Animation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
+import android.view.View.OnFocusChangeListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -88,6 +89,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private TextView seekTotalTime;
     private TextView playTextBig;
     private EditText playTextEdit;
+    private EditText playRating;
     private Recording.PlayListener playListener;
 
     /* Recordings Data */
@@ -236,6 +238,18 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         playText = (TextView) findViewById(R.id.play_text_bar);
         playLength = (TextView) findViewById(R.id.play_length);
         playTextEdit = (EditText) findViewById(R.id.play_text_edit);
+        playRating = (EditText) findViewById(R.id.rating);
+
+        // Rating change
+        playRating.setOnFocusChangeListener(new OnFocusChangeListener() {
+
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    playingRec.setRating(Integer.parseInt(String.valueOf(playRating.getText())));
+                }
+
+            }
+        });
 
         mapsButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -410,6 +424,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         setPlayText(rec.getName());
         playTextEdit.setText(rec.getName());
         playLength.setText(rec.lengthString());
+        playRating.setText(Integer.toString(rec.getRating()));
         setProgressBarsMax(playingRec.frameLength());
         setProgressBars(0);
         seekCurrentTime.setText("--:--");

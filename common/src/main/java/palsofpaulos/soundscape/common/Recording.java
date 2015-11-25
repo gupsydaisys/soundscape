@@ -36,6 +36,7 @@ public class Recording {
     private PlayAudioTask playTask;
     private boolean isPlaying;
     private int oldProgress = 0;
+    private int rating = 5;
 
     private boolean isDeleted = false;
     private boolean isStopped = false;
@@ -110,6 +111,8 @@ public class Recording {
 
     public String getName() { return this.name; }
 
+    public int getRating() { return this.rating; }
+
     public boolean isPlaying() { return this.isPlaying; }
 
     public boolean isDeleted() { return this.isDeleted; }
@@ -169,6 +172,8 @@ public class Recording {
     }
 
     public void setName(String name) { this.name = name; }
+
+    public void setRating(int rating) { this.rating = rating;}
 
     public void setPlayHead(int progress) {
         if (playTask != null && playTask.track != null) {
