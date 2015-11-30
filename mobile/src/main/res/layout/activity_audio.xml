@@ -49,6 +49,12 @@
                         android:text="@string/recording_header"
                         android:layout_centerHorizontal="true"/>
 
+                    <Button
+                        android:layout_height="wrap_content"
+                        android:layout_width="wrap_content"
+                        android:layout_alignParentEnd="true"
+                        android:onClick="watchNotification"/>
+
                 </RelativeLayout>
 
                 <ListView

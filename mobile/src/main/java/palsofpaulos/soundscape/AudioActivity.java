@@ -1,5 +1,6 @@
 package palsofpaulos.soundscape;
 
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,13 +11,15 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.OnFocusChangeListener;
 import android.view.animation.Animation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
-import android.view.View.OnFocusChangeListener;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
@@ -28,7 +31,6 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -44,10 +46,10 @@ import java.util.Date;
 import java.util.HashMap;
 
 import palsofpaulos.soundscape.common.CommManager;
+import palsofpaulos.soundscape.common.LayoutAnimations.HeightAnimation;
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.RecordingException;
 import palsofpaulos.soundscape.common.RecordingManager;
-import palsofpaulos.soundscape.common.LayoutAnimations.*;
 
 public class AudioActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -223,7 +225,27 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         }
     };
 
+    public void watchNotification(View view) {
+        int notificationId = 001;
+        // Build intent for notification content
+        Intent viewIntent = new Intent(this, AudioActivity.class);
+        PendingIntent viewPendingIntent =
+                PendingIntent.getActivity(this, 0, viewIntent, 0);
 
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.soundscape_ic)
+                        .setContentTitle("A recording is nearby!")
+                        .setContentText("Recording Title")
+                        .setContentIntent(viewPendingIntent);
+
+        // Get an instance of the NotificationManager service
+        NotificationManagerCompat notificationManager =
+                NotificationManagerCompat.from(this);
+
+        // Build the notification and issues it with notification manager.
+        notificationManager.notify(notificationId, notificationBuilder.build());
+    }
 
 
     private void initializeButtons() {
