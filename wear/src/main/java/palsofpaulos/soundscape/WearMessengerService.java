@@ -1,5 +1,8 @@
 package palsofpaulos.soundscape;
 
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.util.Log;
 
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -35,5 +38,4 @@ public class WearMessengerService extends WearableListenerService {
             }
         }).start();
     }
-
 }

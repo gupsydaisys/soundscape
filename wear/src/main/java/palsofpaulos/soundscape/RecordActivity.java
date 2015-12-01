@@ -139,7 +139,7 @@ public class RecordActivity extends WearableActivity {
         } else {
             recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_off_3));
             stopRecording();
-            if (useSpeechForName && isNetworkAvailable()) {
+            if (useSpeechForName && CommManager.isNetworkAvailable(this)) {
                 startSpeechRecognition();
             }
             else {
@@ -258,10 +258,4 @@ public class RecordActivity extends WearableActivity {
         finish();
     }
 
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
 }

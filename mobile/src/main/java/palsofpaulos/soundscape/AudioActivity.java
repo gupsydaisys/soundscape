@@ -276,7 +276,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         mapsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isNetworkAvailable()) {
+                if (CommManager.isNetworkAvailable(AudioActivity.this)) {
                     expandMapLayout();
                 }
                 else {
@@ -710,11 +710,4 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         listLayout.startAnimation(openListAnim);
     }
 
-
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
 }
