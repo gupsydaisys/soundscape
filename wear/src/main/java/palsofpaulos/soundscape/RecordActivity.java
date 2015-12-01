@@ -93,6 +93,15 @@ public class RecordActivity extends WearableActivity {
         recButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                finish();
+            }
+        });
+    }
+
+    private void initializeButtonListeners() {
+        recButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
                 toggleRecording();
             }
         });
@@ -119,6 +128,7 @@ public class RecordActivity extends WearableActivity {
                     public void run() {
                         initializeButtons();
                         toggleRecording();
+                        initializeButtonListeners();
                     }
                 });
 
@@ -135,9 +145,12 @@ public class RecordActivity extends WearableActivity {
     private void toggleRecording() {
         if (!isRecording) {
             startRecording();
-            recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_on_3));
-        } else {
-            recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_off_3));
+            recButton.setBackgroundResource(R.drawable.record_on_3);
+            //recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_on_3));
+        }
+        else {
+            recButton.setBackgroundResource(R.drawable.record_off_3);
+            //recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_off_3));
             stopRecording();
             if (useSpeechForName && CommManager.isNetworkAvailable(this)) {
                 startSpeechRecognition();
@@ -218,6 +231,9 @@ public class RecordActivity extends WearableActivity {
         }
 
     }
+
+    /* Speech to Text Naming Methods
+    * ------------------------------------------- */
 
     private void initSpeechRecgonition() {
         speechRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
