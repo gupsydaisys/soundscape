@@ -2,12 +2,30 @@
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="#A5B7CA"
+    android:weightSum="1"
+    android:gravity="center"
+    android:orientation="vertical">
 
-    <fragment xmlns:android="http://schemas.android.com/apk/res/android"
-        class="com.google.android.gms.maps.MapFragment"
-        android:id="@+id/recordings_map"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+    <Button
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:text="View Recordings"
+        android:background="#D4966A"
+        android:layout_gravity="center"
+        android:onClick="showRecordings"
+        ></Button>
+
+    <ToggleButton
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
+        android:text="Notifications On"
+        android:id="@+id/toggleButton"
+        android:layout_gravity="center"
+        android:checked="false"
+        android:textOff="Notifications Off"
+        android:textOn="Notifications On"/>
+
 
 </LinearLayout>
