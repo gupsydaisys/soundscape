@@ -4,7 +4,10 @@ package palsofpaulos.soundscape.common;
  * coomunicating through intents and across the wear API layer
  */
 
+import android.content.Context;
 import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 
 public class CommManager {
 
@@ -36,4 +39,11 @@ public class CommManager {
     public static final int LOCATION_UPDATE_FASTEST = 60000;
 
     public static Location currentLocation = new Location("");
+
+    public static boolean isNetworkAvailable(Context ctx) {
+        ConnectivityManager connectivityManager
+                = (ConnectivityManager) ctx.getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
+    }
 }

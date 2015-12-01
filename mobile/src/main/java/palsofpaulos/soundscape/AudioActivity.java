@@ -1,5 +1,6 @@
 package palsofpaulos.soundscape;
 
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,9 +11,12 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
+import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
+import android.view.View.OnFocusChangeListener;
 import android.view.animation.Animation;
 import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
@@ -28,7 +32,6 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -43,10 +46,10 @@ import java.util.Date;
 import java.util.HashMap;
 
 import palsofpaulos.soundscape.common.CommManager;
+import palsofpaulos.soundscape.common.LayoutAnimations.HeightAnimation;
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.RecordingException;
 import palsofpaulos.soundscape.common.RecordingManager;
-import palsofpaulos.soundscape.common.LayoutAnimations.*;
 
 public class AudioActivity extends FragmentActivity implements OnMapReadyCallback {
 
@@ -88,6 +91,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private TextView seekTotalTime;
     private TextView playTextBig;
     private EditText playTextEdit;
+    private EditText playRating;
     private Recording.PlayListener playListener;
 
     /* Recordings Data */
@@ -221,7 +225,27 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         }
     };
 
+    public void watchNotification(View view) {
+        int notificationId = 001;
+        // Build intent for notification content
+        Intent viewIntent = new Intent(this, AudioActivity.class);
+        PendingIntent viewPendingIntent =
+                PendingIntent.getActivity(this, 0, viewIntent, 0);
 
+        NotificationCompat.Builder notificationBuilder =
+                new NotificationCompat.Builder(this)
+                        .setSmallIcon(R.drawable.soundscape_ic)
+                        .setContentTitle("A recording is nearby!")
+                        .setContentText("Recording Title")
+                        .setContentIntent(viewPendingIntent);
+
+        // Get an instance of the NotificationManager service
+        NotificationManagerCompat notificationManager =
+                NotificationManagerCompat.from(this);
+
+        // Build the notification and issues it with notification manager.
+        notificationManager.notify(notificationId, notificationBuilder.build());
+    }
 
 
     private void initializeButtons() {
@@ -236,11 +260,23 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         playText = (TextView) findViewById(R.id.play_text_bar);
         playLength = (TextView) findViewById(R.id.play_length);
         playTextEdit = (EditText) findViewById(R.id.play_text_edit);
+        playRating = (EditText) findViewById(R.id.rating);
+
+        // Rating change
+        playRating.setOnFocusChangeListener(new OnFocusChangeListener() {
+
+            public void onFocusChange(View v, boolean hasFocus) {
+                if (!hasFocus) {
+                    playingRec.setRating(Integer.parseInt(String.valueOf(playRating.getText())));
+                }
+
+            }
+        });
 
         mapsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if (isNetworkAvailable()) {
+                if (CommManager.isNetworkAvailable(AudioActivity.this)) {
                     expandMapLayout();
                 }
                 else {
@@ -275,8 +311,8 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
                 new EditText.OnEditorActionListener() {
                     @Override
                     public boolean onEditorAction(TextView v, int actionId, KeyEvent event) {
-                        if (actionId == EditorInfo.IME_ACTION_DONE || event != null &&
-                                event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
+                        if (actionId == EditorInfo.IME_ACTION_DONE || actionId == EditorInfo.IME_ACTION_NEXT ||
+                                event != null && event.getAction() == KeyEvent.ACTION_DOWN && event.getKeyCode() == KeyEvent.KEYCODE_ENTER) {
                             if (!(event != null && event.isShiftPressed())) {
                                 // the user is done typing.
                                 playingRec.setName(playTextEdit.getText().toString());
@@ -410,6 +446,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         setPlayText(rec.getName());
         playTextEdit.setText(rec.getName());
         playLength.setText(rec.lengthString());
+        playRating.setText(Integer.toString(rec.getRating()));
         setProgressBarsMax(playingRec.frameLength());
         setProgressBars(0);
         seekCurrentTime.setText("--:--");
@@ -673,11 +710,4 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         listLayout.startAnimation(openListAnim);
     }
 
-
-    private boolean isNetworkAvailable() {
-        ConnectivityManager connectivityManager
-                = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
-        return activeNetworkInfo != null && activeNetworkInfo.isConnected();
-    }
 }

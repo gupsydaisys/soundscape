@@ -20,14 +20,12 @@ public class AwaitRecordActivity extends WearableActivity {
     private static final String TAG = "Await Record Activity";
 
     /* Recording Activity Detection */
+    private static final int REC_TOUCHES = 3;
     private static final int INTERVAL = 1000;
     private static final int SECOND = 1000;
     private boolean useSpeechForName = false;
     private CountDownTimer touchTimer;
     private int touches = 0;
-
-    private static final SimpleDateFormat AMBIENT_DATE_FORMAT =
-            new SimpleDateFormat("HH:mm", Locale.US);
 
     private BoxInsetLayout mContainerView;
     private TextView mTextView;
@@ -64,7 +62,7 @@ public class AwaitRecordActivity extends WearableActivity {
                     }
                 };
 
-                if (touches == 3) {
+                if (touches == REC_TOUCHES) {
                     recordIntent.putExtra(CommManager.SPEECH_FOR_NAME_EXTRA, useSpeechForName);
                     startActivity(recordIntent);
                 }
@@ -97,7 +95,7 @@ public class AwaitRecordActivity extends WearableActivity {
     @Override
     public void onEnterAmbient(Bundle ambientDetails) {
         super.onEnterAmbient(ambientDetails);
-        updateDisplay();
+        //updateDisplay();
     }
 
     @Override
