@@ -36,7 +36,6 @@ public class RecordingManager {
         Date recDate;
         if (dateString.equals("")) {
             Log.e(TAG, "Tried to initialize date from empty string");
-            recDate = Calendar.getInstance().getTime();
         }
         try {
             recDate = RecordingManager.STORE_DATE_FORMAT.parse(dateString);
