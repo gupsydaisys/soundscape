@@ -1,6 +1,7 @@
 package palsofpaulos.soundscape;
 
-<<<<<<< HEAD
+import palsofpaulos.soundscape.common.CommManager;
+
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -29,7 +30,9 @@ public class NotifyService extends Service {
     private static Recording notifyRecording = null;
 
     @Override
-    public IBinder onBind(Intent intent) { return null; }
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
 
     @Override
     public void onCreate() {
@@ -60,11 +63,11 @@ public class NotifyService extends Service {
     private void getDBRecordings() {
         RecordingManager.dbRecs.clear();
         SharedPreferences prefs = getSharedPreferences(RecordingManager.DB_RECS, MODE_PRIVATE);
-        for (int ii = 0; ; ii++){
+        for (int ii = 0; ; ii++) {
             String recPath = prefs.getString(ii + "file", "");
 
             // recPath is an empty string when we've run out of recordings to get
-            if (!recPath.equals("")){
+            if (!recPath.equals("")) {
                 Location recLoc = new Location("");
                 Date recDate = RecordingManager.recDateFromString(prefs.getString(ii + "date", ""));
                 recLoc.setLatitude(Double.longBitsToDouble(prefs.getLong(ii + "lat", 0)));
@@ -102,7 +105,6 @@ public class NotifyService extends Service {
             watchNotification(minRec);
         }
     }
-
 
 
     public void watchNotification(Recording recording) {
@@ -146,11 +148,4 @@ public class NotifyService extends Service {
         notificationManager.cancel(CommManager.notificationId - 1);
         notificationManager.notify(CommManager.notificationId, notificationBuilder.build());
     }
-=======
-/**
- * Created by StephenS on 12/1/2015.
- */
-public class NotifyService {
-    //will use this service to notify watch of a nearby recording
->>>>>>> origin/master
 }
