@@ -1,5 +1,6 @@
 package palsofpaulos.soundscape;
 
+<<<<<<< HEAD
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
@@ -145,4 +146,11 @@ public class NotifyService extends Service {
         notificationManager.cancel(CommManager.notificationId - 1);
         notificationManager.notify(CommManager.notificationId, notificationBuilder.build());
     }
+=======
+/**
+ * Created by StephenS on 12/1/2015.
+ */
+public class NotifyService {
+    //will use this service to notify watch of a nearby recording
+>>>>>>> origin/master
 }
