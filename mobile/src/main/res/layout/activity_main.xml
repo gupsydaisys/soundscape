@@ -14,18 +14,17 @@
         android:text="View Recordings"
         android:background="#D4966A"
         android:layout_gravity="center"
-        android:onClick="showRecordings"
-        ></Button>
+        android:onClick="showRecordings"/>
 
     <ToggleButton
+        android:id="@+id/toggleButton"
         android:layout_width="200dp"
         android:layout_height="wrap_content"
         android:text="Notifications On"
-        android:id="@+id/toggleButton"
         android:layout_gravity="center"
         android:checked="false"
         android:textOff="Notifications Off"
-        android:textOn="Notifications On"/>
+        android:textOn="Notifications On" />
 
 
 </LinearLayout>

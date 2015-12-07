@@ -1,18 +1,13 @@
 package palsofpaulos.soundscape;
 
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.app.NotificationCompat;
 import android.util.Log;
 import android.view.KeyEvent;
 import android.view.View;
@@ -141,12 +136,14 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
         stopPlayback();
         saveRecordings();
+        saveDBRecordings();
     }
 
     @Override
     protected void onDestroy() {
         super.onDestroy();
 
+        stopService(new Intent(this, NotifyService.class));
         unregisterReceiver(audioReceiver);
     }
 
@@ -194,11 +191,10 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         @Override
         public void onReceive(Context context, Intent intent) {
 
-            sendBroadcast(responseIntent);
-
             final String filePath = intent.getStringExtra(CommManager.REC_FILEPATH);
             // a null recording request was sent, indicating it was just looking for a response
-            if (filePath.equals(CommManager.NULL_REC_PATH)) {
+            if (filePath.equals(CommManager.RESPONSE_PATH)) {
+                sendBroadcast(responseIntent);
                 return;
             }
             else if (filePath.equals(CommManager.RENAME_PATH)) {
@@ -214,39 +210,29 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             recLoc.setLongitude(longitude);
             final Date recDate = RecordingManager.recDateFromString(intent.getStringExtra(CommManager.REC_DATE));
 
-            Recording newRec = new Recording(filePath, recLoc, recDate);
-            newRec.setName(intent.getStringExtra(CommManager.REC_NAME));
+            if (filePath.contains(CommManager.PLAY_PATH)) {
+                Recording newRec = new Recording(filePath.substring(CommManager.PLAY_PATH.length()), recLoc, recDate);
+                newRec.setName(intent.getStringExtra(CommManager.REC_NAME));
+
+                try {
+                    playRec(newRec);
+                }
+                catch (RecordingException e) {
+                    Log.e(TAG, e.getMessage());
+                }
+            }
+            else {
+                Recording newRec = new Recording(filePath, recLoc, recDate);
+                newRec.setName(intent.getStringExtra(CommManager.REC_NAME));
 
 
-            recs.add(0, newRec);
-            addMarkerForRec(0);
+                recs.add(0, newRec);
+                addMarkerForRec(0);
 
-            updateRecsView();
+                updateRecsView();
+            }
         }
     };
-
-    public void watchNotification(View view) {
-        int notificationId = 001;
-        // Build intent for notification content
-        Intent viewIntent = new Intent(this, AudioActivity.class);
-        PendingIntent viewPendingIntent =
-                PendingIntent.getActivity(this, 0, viewIntent, 0);
-
-        NotificationCompat.Builder notificationBuilder =
-                new NotificationCompat.Builder(this)
-                        .setSmallIcon(R.drawable.soundscape_ic)
-                        .setContentTitle("A recording is nearby!")
-                        .setContentText("Recording Title")
-                        .setContentIntent(viewPendingIntent);
-
-        // Get an instance of the NotificationManager service
-        NotificationManagerCompat notificationManager =
-                NotificationManagerCompat.from(this);
-
-        // Build the notification and issues it with notification manager.
-        notificationManager.notify(notificationId, notificationBuilder.build());
-    }
-
 
     private void initializeButtons() {
         mapsButton = (ImageButton) findViewById(R.id.maps_button);
@@ -500,6 +486,21 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private void saveRecordings() {
         SharedPreferences prefs = getSharedPreferences(RecordingManager.SAVED_RECS, MODE_PRIVATE);
+        SharedPreferences.Editor editor = prefs.edit();
+        editor.clear();
+        for (int ii = 0; ii < recs.size(); ii++) {
+            Recording rec = recs.get(ii);
+            editor.putString(ii + "file", rec.getFilePath());
+            editor.putLong(ii + "lat", Double.doubleToRawLongBits(rec.getLocation().getLatitude()));
+            editor.putLong(ii + "lng", Double.doubleToLongBits(rec.getLocation().getLongitude()));
+            editor.putString(ii + "place", rec.getName());
+            editor.putString(ii + "date", rec.getDateStorageString());
+        }
+        editor.commit();
+    }
+
+    private void saveDBRecordings() {
+        SharedPreferences prefs = getSharedPreferences(RecordingManager.DB_RECS, MODE_PRIVATE);
         SharedPreferences.Editor editor = prefs.edit();
         editor.clear();
         for (int ii = 0; ii < recs.size(); ii++) {

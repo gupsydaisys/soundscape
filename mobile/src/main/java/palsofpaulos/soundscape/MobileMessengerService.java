@@ -52,7 +52,7 @@ public class MobileMessengerService extends WearableListenerService implements
         Log.d(TAG, "Service created!");
 
         checkResponseIntent = new Intent(CommManager.AUDIO_INTENT);
-        checkResponseIntent.putExtra(CommManager.REC_FILEPATH, CommManager.NULL_REC_PATH);
+        checkResponseIntent.putExtra(CommManager.REC_FILEPATH, CommManager.RESPONSE_PATH);
 
         registerReceiver(responseReceiver, new IntentFilter(CommManager.AUDIO_RESPONSE_INTENT));
         sendPendingRecordings();
@@ -120,6 +120,7 @@ public class MobileMessengerService extends WearableListenerService implements
     public void onLocationChanged(Location location) {
         Log.d(TAG, location.toString());
         CommManager.currentLocation = location;
+        CommManager.locationChangedListener.onLocationChanged(location);
     }
 
     @Override

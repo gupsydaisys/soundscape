@@ -9,6 +9,7 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Locale;
@@ -28,8 +29,11 @@ public class RecordingManager {
     public static final SimpleDateFormat PRINT_DATE_FORMAT = new SimpleDateFormat("MM/dd/yy HH:mm", Locale.US);
 
     public static final String SAVED_RECS = "ss_rec_list";
+    public static final String DB_RECS = "db_rec_list";
 
     public static int lastId = 0;
+
+    public static ArrayList<Recording> dbRecs = new ArrayList<>();
 
     // returns date if string is properly formatted, otherwise the current date
     public static Date recDateFromString(String dateString) {

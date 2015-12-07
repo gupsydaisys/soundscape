@@ -9,7 +9,9 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.CompoundButton;
 import android.widget.Spinner;
+import android.widget.ToggleButton;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -17,6 +19,22 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        ToggleButton notifyToggle = (ToggleButton) findViewById(R.id.toggleButton);
+
+        final Intent notifyServiceIntent = new Intent(this, NotifyService.class);
+
+        notifyToggle.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (isChecked) {
+                    startService(notifyServiceIntent);
+                }
+                else {
+                    stopService(notifyServiceIntent);
+                }
+            }
+        });
     }
 
     public void showRecordings(View view) {
