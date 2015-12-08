@@ -7,4 +7,6 @@
     <string name="recording_header">Soundscape</string>
     <string name="title_activity_rec_play">RecPlayActivity</string>
     <string name="title_activity_map">MapActivity</string>
+
+    <string name="notify_dialog">Do you want to get notified? You will receive notifications there are nearby recordings to listen to.</string>
 </resources>

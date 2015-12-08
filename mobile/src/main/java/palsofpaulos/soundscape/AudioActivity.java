@@ -1,7 +1,9 @@
 package palsofpaulos.soundscape;
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
@@ -270,6 +272,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         });
         */
 
+        // button to go from recordings list view to map view
         mapsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -282,6 +285,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         });
 
+        // button to return from recordings map view to list view
         listButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -289,6 +293,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         });
 
+        // toggle button to swap between user recordings and world recordings
         mapRecsButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
             @Override
             public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
@@ -307,14 +312,27 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             }
         });
 
+        // start notifications button
         final Intent notifyServiceIntent = new Intent(this, NotifyService.class);
+        final AlertDialog.Builder notifyDialog = new AlertDialog.Builder(this);
+        notifyDialog.setMessage(R.string.notify_dialog)
+                .setPositiveButton("Notify!", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        notifyActive = true;
+                        notifyButton.setBackgroundResource(R.drawable.notify_on);
+                        startService(notifyServiceIntent);
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User cancelled the dialog
+                    }
+                });
         notifyButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (!notifyActive) {
-                    notifyActive = true;
-                    notifyButton.setBackgroundResource(R.drawable.notify_on);
-                    startService(notifyServiceIntent);
+                    notifyDialog.show();
                 }
                 else {
                     notifyActive = false;
@@ -323,6 +341,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
                 }
             }
         });
+
 
         playTextBig.setOnLongClickListener(new View.OnLongClickListener() {
             @Override
