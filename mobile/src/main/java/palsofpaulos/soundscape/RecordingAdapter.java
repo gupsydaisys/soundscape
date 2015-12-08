@@ -1,7 +1,9 @@
 package palsofpaulos.soundscape;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -37,7 +39,7 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
     }
 
     @Override
-    public View getView(final int position, final View convertView, ViewGroup parent) {
+    public View getView(final int position, final View convertView, final ViewGroup parent) {
         final RecHolder holder;
         View row = convertView;
         final ListView parentList = (ListView) parent;
@@ -61,7 +63,7 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
         }
 
         final Recording rec = recs.get(position);
-        if (rec.getName() == "") {
+        if (rec.getName().equals("")) {
             holder.recText.setText(String.valueOf(rec.getId()));
         }
         else {
@@ -70,12 +72,25 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
         holder.recLength.setText(rec.lengthString());
         holder.recDate.setText(rec.getDateString());
 
+        final AlertDialog.Builder builder = new AlertDialog.Builder(this.context);
+        builder.setMessage("Are you sure you want to delete " + holder.recText.getText() + "?")
+                .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        rec.delete();
+                        recs.remove(position);
+                        notifyDataSetChanged();
+                    }
+                })
+                .setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                    public void onClick(DialogInterface dialog, int id) {
+                        // User cancelled the dialog
+                    }
+                });
+
         holder.delButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                rec.delete();
-                recs.remove(position);
-                notifyDataSetChanged();
+                builder.show();
             }
         });
 

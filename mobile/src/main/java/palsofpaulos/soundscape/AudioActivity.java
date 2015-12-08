@@ -6,6 +6,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.location.Location;
+import android.media.Image;
 import android.os.Bundle;
 import android.support.v4.app.FragmentActivity;
 import android.util.Log;
@@ -67,15 +68,16 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private int listLayoutInitHeight;
     private int recsLayoutInitHeight;
-    private int recsListLayoutInitHeight;
     private int barLayoutInitHeight;
 
     private boolean playBarExpanded = false;
     private boolean preventPlayBarClose = true;
     private boolean blockSeekUpdate = false;
+    private boolean notifyActive = false;
 
     private ImageButton mapsButton;
     private ImageButton listButton;
+    private ImageButton notifyButton;
     private ImageView playButtonBar;
     private ImageView playButtonBig;
     private ProgressBar progressBar;
@@ -192,7 +194,8 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         public void onReceive(Context context, Intent intent) {
 
             final String filePath = intent.getStringExtra(CommManager.REC_FILEPATH);
-            // a null recording request was sent, indicating it was just looking for a response
+
+            // a response request was sent, checking if AudioActivity is active
             if (filePath.equals(CommManager.RESPONSE_PATH)) {
                 sendBroadcast(responseIntent);
                 return;
@@ -211,11 +214,14 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             final Date recDate = RecordingManager.recDateFromString(intent.getStringExtra(CommManager.REC_DATE));
 
             if (filePath.contains(CommManager.PLAY_PATH)) {
-                Recording newRec = new Recording(filePath.substring(CommManager.PLAY_PATH.length()), recLoc, recDate);
-                newRec.setName(intent.getStringExtra(CommManager.REC_NAME));
+                CommManager.notificationActive = false;
+
+                String playFilePath = filePath.substring(CommManager.PLAY_PATH.length());
+                Recording notifyRec = new Recording(playFilePath, recLoc, recDate);
+                notifyRec.setName(intent.getStringExtra(CommManager.REC_NAME));
 
                 try {
-                    playRec(newRec);
+                    playRec(notifyRec);
                 }
                 catch (RecordingException e) {
                     Log.e(TAG, e.getMessage());
@@ -224,7 +230,6 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             else {
                 Recording newRec = new Recording(filePath, recLoc, recDate);
                 newRec.setName(intent.getStringExtra(CommManager.REC_NAME));
-
 
                 recs.add(0, newRec);
                 addMarkerForRec(0);
@@ -237,6 +242,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private void initializeButtons() {
         mapsButton = (ImageButton) findViewById(R.id.maps_button);
         listButton = (ImageButton) findViewById(R.id.list_button);
+        notifyButton = (ImageButton) findViewById(R.id.notify_button);
         playButtonBar = (ImageView) findViewById(R.id.play_pause_bar);
         playButtonBar.setImageResource(R.drawable.play_button);
         playButtonBig = (ImageView) findViewById(R.id.play_pause_big);
@@ -246,7 +252,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         playText = (TextView) findViewById(R.id.play_text_bar);
         playLength = (TextView) findViewById(R.id.play_length);
         playTextEdit = (EditText) findViewById(R.id.play_text_edit);
-        playRating = (EditText) findViewById(R.id.rating);
+        /*playRating = (EditText) findViewById(R.id.rating);
 
         // Rating change
         playRating.setOnFocusChangeListener(new OnFocusChangeListener() {
@@ -258,14 +264,14 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
             }
         });
+        */
 
         mapsButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (CommManager.isNetworkAvailable(AudioActivity.this)) {
                     expandMapLayout();
-                }
-                else {
+                } else {
                     Toast.makeText(getApplicationContext(), "Network connection required to use maps view",
                             Toast.LENGTH_LONG).show();
                 }
@@ -276,6 +282,23 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void onClick(View v) {
                 closeMapLayout();
+            }
+        });
+
+        final Intent notifyServiceIntent = new Intent(this, NotifyService.class);
+        notifyButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (!notifyActive) {
+                    notifyActive = true;
+                    notifyButton.setBackgroundResource(R.drawable.notify_on);
+                    startService(notifyServiceIntent);
+                }
+                else {
+                    notifyActive = false;
+                    notifyButton.setBackgroundResource(R.drawable.notify_off);
+                    stopService(notifyServiceIntent);
+                }
             }
         });
 
@@ -432,7 +455,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         setPlayText(rec.getName());
         playTextEdit.setText(rec.getName());
         playLength.setText(rec.lengthString());
-        playRating.setText(Integer.toString(rec.getRating()));
+        //playRating.setText(Integer.toString(rec.getRating()));
         setProgressBarsMax(playingRec.frameLength());
         setProgressBars(0);
         seekCurrentTime.setText("--:--");
@@ -490,6 +513,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         editor.clear();
         for (int ii = 0; ii < recs.size(); ii++) {
             Recording rec = recs.get(ii);
+            editor.putInt(ii + "id", rec.getId());
             editor.putString(ii + "file", rec.getFilePath());
             editor.putLong(ii + "lat", Double.doubleToRawLongBits(rec.getLocation().getLatitude()));
             editor.putLong(ii + "lng", Double.doubleToLongBits(rec.getLocation().getLongitude()));

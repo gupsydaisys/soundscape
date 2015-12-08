@@ -3,18 +3,20 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/h_scroll_view_container"
     android:layout_width="match_parent"
+    android:background="@drawable/audio_list_item"
     android:layout_height="60dip">
 
     <RelativeLayout
         android:id="@+id/delete_button"
         android:layout_width="50dip"
         android:layout_height="match_parent"
-        android:background="@drawable/audio_delete_button"
-        android:layout_alignParentEnd="true">
+        android:layout_alignParentEnd="true"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="5dip">
 
         <ImageView
             android:background="@drawable/garbage"
-            android:backgroundTint="@color/charcoal"
+            android:backgroundTint="@color/delete_red"
             android:textSize="15sp"
             android:layout_centerVertical="true"
             android:layout_centerHorizontal="true"
@@ -30,7 +32,6 @@
         android:orientation="vertical"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@drawable/audio_list_item"
         android:paddingStart="10dip"
         android:paddingEnd="10dip"
         android:layout_toStartOf="@id/delete_button">

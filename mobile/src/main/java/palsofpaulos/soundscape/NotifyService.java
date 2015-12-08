@@ -2,23 +2,18 @@ package palsofpaulos.soundscape;
 
 import palsofpaulos.soundscape.common.CommManager;
 
-import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.location.Location;
-import android.os.Bundle;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
-import android.telecom.ConnectionRequest;
 import android.util.Log;
 
-import java.util.ArrayList;
 import java.util.Date;
 
-import palsofpaulos.soundscape.common.CommManager;
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.RecordingManager;
 
@@ -26,7 +21,6 @@ public class NotifyService extends Service {
 
     private static final String TAG = "Notify Service";
 
-    private static boolean notificationActive = false;
     private static Recording notifyRecording = null;
 
     @Override
@@ -38,11 +32,14 @@ public class NotifyService extends Service {
     public void onCreate() {
         Log.d(TAG, "Notifications enabled!");
 
+        Intent locationIntent = new Intent(this, LocationService.class);
+        startService(locationIntent);
+
         getDBRecordings();
         CommManager.setLocationChangedListener(new CommManager.LocationChangedListener() {
             @Override
             public void onLocationChanged(Location location) {
-                if (!notificationActive) {
+                if (!CommManager.notificationActive) {
                     lookForNearRecording(location);
                 }
             }
@@ -52,6 +49,8 @@ public class NotifyService extends Service {
 
     @Override
     public void onDestroy() {
+        Log.d(TAG, "Service destroyed");
+
         CommManager.setLocationChangedListener(new CommManager.LocationChangedListener() {
             @Override
             public void onLocationChanged(Location location) {
@@ -99,29 +98,28 @@ public class NotifyService extends Service {
             }
         }
 
-        if (minDist <= CommManager.MAX_NOTIFY_DISTANCE && minRec != null) {
+        if (minDist < CommManager.MAX_NOTIFY_DISTANCE) {
             Log.d(TAG, "Found nearby recording, notifying");
 
-            watchNotification(minRec);
+            notifyRecording(minRec);
         }
     }
 
+    public void notifyRecording(Recording rec) {
 
-    public void watchNotification(Recording recording) {
-
-        //notificationActive = true;
-        notifyRecording = recording;
+        CommManager.notificationActive = true;
+        notifyRecording = rec;
 
         // Build intent for recording playback
         Intent recIntent = new Intent(CommManager.AUDIO_INTENT);
-        recIntent.putExtra(CommManager.REC_FILEPATH, CommManager.PLAY_PATH + recording.getFilePath());
-        recIntent.putExtra(CommManager.REC_NAME, recording.getName());
-        recIntent.putExtra(CommManager.REC_DATE, recording.getDateStorageString());
-        recIntent.putExtra(CommManager.REC_LAT, recording.getLocation().getLatitude());
-        recIntent.putExtra(CommManager.REC_LNG, recording.getLocation().getLongitude());
+        recIntent.putExtra(CommManager.REC_FILEPATH, CommManager.PLAY_PATH + rec.getFilePath());
+        recIntent.putExtra(CommManager.REC_NAME, rec.getName());
+        recIntent.putExtra(CommManager.REC_DATE, rec.getDateStorageString());
+        recIntent.putExtra(CommManager.REC_LAT, rec.getLocation().getLatitude());
+        recIntent.putExtra(CommManager.REC_LNG, rec.getLocation().getLongitude());
 
         //PendingIntent.getBroadcast()
-        PendingIntent recPendingIntent = PendingIntent.getBroadcast(this, 0, recIntent, 0);
+        PendingIntent recPendingIntent = PendingIntent.getBroadcast(this, 0, recIntent, PendingIntent.FLAG_UPDATE_CURRENT);
 
         // action to start the intent
         NotificationCompat.Action listenAction = new NotificationCompat.Action(R.drawable.blank, "Listen", recPendingIntent);
@@ -134,11 +132,10 @@ public class NotifyService extends Service {
         NotificationCompat.Builder notificationBuilder =
                 new NotificationCompat.Builder(this)
                         .setSmallIcon(R.drawable.soundscape_ic)
-                        .setContentTitle(recording.getName())
-                        .setContentText(recording.getDateString())
-                        .setVibrate(new long[]{1000, 1000})
+                        .setContentTitle(rec.getName())
+                        .setContentText(rec.getDateString())
                         .setContentIntent(recPendingIntent)
-                        .setAutoCancel(true)
+                        .setVibrate(new long[]{500, 500})
                         .extend(extender);
 
         // Get an instance of the NotificationManager service
@@ -148,4 +145,5 @@ public class NotifyService extends Service {
         notificationManager.cancel(CommManager.notificationId - 1);
         notificationManager.notify(CommManager.notificationId, notificationBuilder.build());
     }
+
 }

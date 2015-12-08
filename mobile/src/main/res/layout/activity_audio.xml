@@ -49,6 +49,14 @@
                         android:text="@string/recording_header"
                         android:layout_centerHorizontal="true"/>
 
+                    <ImageButton
+                        android:id="@+id/notify_button"
+                        android:layout_width="50dip"
+                        android:layout_height="50dip"
+                        android:background="@drawable/notify_off"
+                        android:scaleType="fitCenter"
+                        android:layout_alignParentEnd="true"/>
+
                 </RelativeLayout>
 
                 <ListView
@@ -234,6 +242,7 @@
             android:visibility="gone"/>
 
         <!-- Rating View-->
+        <!--
         <LinearLayout
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -250,6 +259,7 @@
                 android:text = "Rating: "
                 android:layout_alignParentStart="true"/>
 
+
             <EditText
                 android:id="@+id/rating"
                 android:inputType="number"
@@ -259,8 +269,9 @@
                 android:textSize="20sp"
                 android:layout_alignParentEnd="true"/>
 
-        </LinearLayout>
 
+        </LinearLayout>
+        -->
 
     </RelativeLayout>
 </LinearLayout>

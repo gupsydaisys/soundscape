@@ -13,7 +13,13 @@ public class CommManager {
 
     public static final String RECORD_ACTIVITY = "/record_activity";
 
+    // message paths
     public static final String SPEECH_RECOGNITION_RESULT = "/speech_recog_res";
+    public static final String NOTIFICATION_REC_NAME = "/notify_name";
+    public static final String NOTIFICATION_REC_DATE = "/notify_date";
+    public static final String NOTIFICATION_REC_FILE = "/notify_filename";
+
+    // channels
     public static final String RECORD_CHANNEL = "/record_channel";
 
     // broadcast intents
@@ -40,6 +46,7 @@ public class CommManager {
 
     public static final double MAX_NOTIFY_DISTANCE = 500; // meters
     public static int notificationId = 0;
+    public static boolean notificationActive = false;
 
     public static Location currentLocation = new Location("");
     public static LocationChangedListener locationChangedListener = new LocationChangedListener() {

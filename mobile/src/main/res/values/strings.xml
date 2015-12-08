@@ -4,7 +4,7 @@
     <string name="title_activity_audio">AudioActivity</string>
     <string name="title_activity_test">TestActivity</string>
 
-    <string name="recording_header">Recordings</string>
+    <string name="recording_header">Soundscape</string>
     <string name="title_activity_rec_play">RecPlayActivity</string>
     <string name="title_activity_map">MapActivity</string>
 </resources>

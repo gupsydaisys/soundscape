@@ -1,5 +1,7 @@
 package palsofpaulos.soundscape.common;
 
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.location.Location;
 import android.media.AudioFormat;
 import android.media.MediaRecorder;
@@ -50,5 +52,23 @@ public class RecordingManager {
         }
 
         return recDate;
+    }
+
+    public static void getLastRecId(Context ctx) {
+        SharedPreferences prefs = ctx.getSharedPreferences(RecordingManager.SAVED_RECS, ctx.MODE_PRIVATE);
+        int maxId = 0;
+        for (int ii = 0; ; ii++){
+            String recPath = prefs.getString(ii + "file", "");
+
+            if (!recPath.equals("")){
+                int recId = prefs.getInt(ii + "id", -1);
+                if (maxId < recId) {
+                    maxId = recId;
+                }
+            } else {
+                break; // Empty String means the default value was returned.
+            }
+        }
+        lastId = maxId + 1;
     }
 }

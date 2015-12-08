@@ -19,7 +19,10 @@ import com.google.android.gms.location.places.PlaceLikelihood;
 import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.wearable.Channel;
+import com.google.android.gms.wearable.MessageApi;
 import com.google.android.gms.wearable.MessageEvent;
+import com.google.android.gms.wearable.Node;
+import com.google.android.gms.wearable.NodeApi;
 import com.google.android.gms.wearable.Wearable;
 import com.google.android.gms.wearable.WearableListenerService;
 
@@ -31,11 +34,9 @@ import java.util.Queue;
 
 import palsofpaulos.soundscape.common.CommManager;
 import palsofpaulos.soundscape.common.Recording;
+import palsofpaulos.soundscape.common.RecordingManager;
 
-public class MobileMessengerService extends WearableListenerService implements
-        GoogleApiClient.ConnectionCallbacks,
-        GoogleApiClient.OnConnectionFailedListener,
-        com.google.android.gms.location.LocationListener {
+public class MobileMessengerService extends WearableListenerService {
 
     private static final String TAG = "Mobile Listener";
 
@@ -50,6 +51,9 @@ public class MobileMessengerService extends WearableListenerService implements
         super.onCreate();
 
         Log.d(TAG, "Service created!");
+
+        Intent locationIntent = new Intent(this, LocationService.class);
+        startService(locationIntent);
 
         checkResponseIntent = new Intent(CommManager.AUDIO_INTENT);
         checkResponseIntent.putExtra(CommManager.REC_FILEPATH, CommManager.RESPONSE_PATH);
@@ -96,47 +100,14 @@ public class MobileMessengerService extends WearableListenerService implements
         }
     }
 
-    @Override
-    public void onConnected(Bundle bundle) {
 
-        LocationRequest locationRequest = LocationRequest.create()
-                .setPriority(LocationRequest.PRIORITY_HIGH_ACCURACY)
-                .setInterval(CommManager.LOCATION_UPDATE_INTERVAL)
-                .setFastestInterval(CommManager.LOCATION_UPDATE_FASTEST);
-
-        LocationServices.FusedLocationApi
-                .requestLocationUpdates(mApiClient, locationRequest, this)
-                .setResultCallback(new ResultCallback<Status>() {
-                    @Override
-                    public void onResult(Status status) {
-                        if (!status.getStatus().isSuccess()) {
-                            Log.d(TAG, "Location request failed!");
-                        }
-                    }
-                });
-    }
-
-    @Override
-    public void onLocationChanged(Location location) {
-        Log.d(TAG, location.toString());
-        CommManager.currentLocation = location;
-        CommManager.locationChangedListener.onLocationChanged(location);
-    }
-
-    @Override
-    public void onConnectionSuspended(int i) {}
-
-    @Override
-    public void onConnectionFailed(ConnectionResult connResult) {}
 
 
     private void initializeGoogleApiClient() {
         mApiClient = new GoogleApiClient.Builder(this)
-                .addApi(LocationServices.API)       // location API
                 .addApi(Places.GEO_DATA_API)        // places API
                 .addApi(Places.PLACE_DETECTION_API) // places API
                 .addApi(Wearable.API)               // data layer API
-                .addConnectionCallbacks(this)
                 .build();
         mApiClient.connect();
     }
@@ -145,6 +116,10 @@ public class MobileMessengerService extends WearableListenerService implements
 
     private void getRecordingFromChannel(final Channel channel) {
         Log.d(TAG, "Getting new recording!");
+
+        if (RecordingManager.lastId == 0) {
+            RecordingManager.getLastRecId(this);
+        }
 
         final String rootPath = this.getFilesDir().getPath();
         final Date recDate = Calendar.getInstance().getTime();
@@ -249,5 +224,21 @@ public class MobileMessengerService extends WearableListenerService implements
                     .append(strArr[ii].substring(1)).append(" ");
         }
         return strBuff.toString().trim();
+    }
+
+    public static void sendMessage(final GoogleApiClient mApiClient, final String path, final String text) {
+        if (!mApiClient.isConnected()) {
+            mApiClient.connect();
+        }
+        new Thread( new Runnable() {
+            @Override
+            public void run() {
+                NodeApi.GetConnectedNodesResult nodes = Wearable.NodeApi.getConnectedNodes( mApiClient ).await();
+                for(Node node : nodes.getNodes()) {
+                    MessageApi.SendMessageResult result = Wearable.MessageApi.sendMessage(
+                            mApiClient, node.getId(), path, text.getBytes() ).await();
+                }
+            }
+        }).start();
     }
 }
