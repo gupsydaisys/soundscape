@@ -145,11 +145,11 @@ public class RecordActivity extends WearableActivity {
     private void toggleRecording() {
         if (!isRecording) {
             startRecording();
-            recButton.setBackgroundResource(R.drawable.record_on_3);
+            recButton.setBackgroundResource(R.drawable.record_on);
             //recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_on_3));
         }
         else {
-            recButton.setBackgroundResource(R.drawable.record_off_3);
+            recButton.setBackgroundResource(R.drawable.record_off);
             //recButton.setBackground(ContextCompat.getDrawable(getApplicationContext(), R.drawable.record_off_3));
             stopRecording();
             if (useSpeechForName && CommManager.isNetworkAvailable(this)) {
