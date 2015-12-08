@@ -73,7 +73,7 @@ public class RecordingAdapter extends ArrayAdapter<Recording> {
         holder.recDate.setText(rec.getDateString());
 
         final AlertDialog.Builder builder = new AlertDialog.Builder(this.context);
-        builder.setMessage("Are you sure you want to delete " + holder.recText.getText() + "?")
+        builder.setMessage("Delete " + holder.recText.getText() + "?")
                 .setPositiveButton("Delete", new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         rec.delete();

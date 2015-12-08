@@ -71,4 +71,27 @@ public class RecordingManager {
         }
         lastId = maxId + 1;
     }
+
+    public static void getDBRecordings(Context ctx) {
+        RecordingManager.dbRecs.clear();
+        SharedPreferences prefs = ctx.getSharedPreferences(RecordingManager.DB_RECS, ctx.MODE_PRIVATE);
+        for (int ii = 0; ; ii++) {
+            String recPath = prefs.getString(ii + "file", "");
+
+            // recPath is an empty string when we've run out of recordings to get
+            if (!recPath.equals("")) {
+                Location recLoc = new Location("");
+                Date recDate = RecordingManager.recDateFromString(prefs.getString(ii + "date", ""));
+                recLoc.setLatitude(Double.longBitsToDouble(prefs.getLong(ii + "lat", 0)));
+                recLoc.setLongitude(Double.longBitsToDouble(prefs.getLong(ii + "lng", 0)));
+
+                Recording addRec = new Recording(recPath, recLoc, recDate);
+                addRec.setName(prefs.getString(ii + "place", ""));
+                RecordingManager.dbRecs.add(addRec);
+            } else {
+                Log.d("Recordings Loaded:", String.valueOf(ii));
+                break; // Empty String means the default value was returned.
+            }
+        }
+    }
 }

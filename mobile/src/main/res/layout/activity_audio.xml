@@ -92,6 +92,14 @@
                     android:src="@drawable/list_ic"
                     android:scaleType="fitCenter"
                     android:layout_gravity="top|start"/>
+                
+                <ToggleButton
+                    android:id="@+id/map_recs_toggle"
+                    android:layout_width="170dip"
+                    android:layout_height="50dip"
+                    android:textOff="My Recordings"
+                    android:textOn="World Recordings"
+                    android:layout_gravity="top|center" />
             </FrameLayout>
 
 

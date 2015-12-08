@@ -12,7 +12,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.util.Log;
 
-import java.util.Date;
+import java.util.ArrayList;
 
 import palsofpaulos.soundscape.common.Recording;
 import palsofpaulos.soundscape.common.RecordingManager;
@@ -21,6 +21,7 @@ public class NotifyService extends Service {
 
     private static final String TAG = "Notify Service";
 
+    private static ArrayList<Recording> notifyRecs = new ArrayList<>();
     private static Recording notifyRecording = null;
 
     @Override
@@ -35,7 +36,11 @@ public class NotifyService extends Service {
         Intent locationIntent = new Intent(this, LocationService.class);
         startService(locationIntent);
 
-        getDBRecordings();
+        if (RecordingManager.dbRecs.size() == 0) {
+            RecordingManager.getDBRecordings(this);
+        }
+        notifyRecs = new ArrayList<>(RecordingManager.dbRecs);
+
         CommManager.setLocationChangedListener(new CommManager.LocationChangedListener() {
             @Override
             public void onLocationChanged(Location location) {
@@ -59,28 +64,7 @@ public class NotifyService extends Service {
         });
     }
 
-    private void getDBRecordings() {
-        RecordingManager.dbRecs.clear();
-        SharedPreferences prefs = getSharedPreferences(RecordingManager.DB_RECS, MODE_PRIVATE);
-        for (int ii = 0; ; ii++) {
-            String recPath = prefs.getString(ii + "file", "");
 
-            // recPath is an empty string when we've run out of recordings to get
-            if (!recPath.equals("")) {
-                Location recLoc = new Location("");
-                Date recDate = RecordingManager.recDateFromString(prefs.getString(ii + "date", ""));
-                recLoc.setLatitude(Double.longBitsToDouble(prefs.getLong(ii + "lat", 0)));
-                recLoc.setLongitude(Double.longBitsToDouble(prefs.getLong(ii + "lng", 0)));
-
-                Recording addRec = new Recording(recPath, recLoc, recDate);
-                addRec.setName(prefs.getString(ii + "place", ""));
-                RecordingManager.dbRecs.add(addRec);
-            } else {
-                Log.d("Recordings Loaded:", String.valueOf(ii));
-                break; // Empty String means the default value was returned.
-            }
-        }
-    }
 
 
     private void lookForNearRecording(Location userLoc) {
@@ -88,20 +72,24 @@ public class NotifyService extends Service {
         Log.d(TAG, "Checking for nearby recordings!");
 
         double minDist = CommManager.MAX_NOTIFY_DISTANCE;
-        Recording minRec = null;
+        int minRec = -1;
 
-        for (Recording rec : RecordingManager.dbRecs) {
+        for (int ii = 0; ii < notifyRecs.size(); ii++) {
+            Recording rec = notifyRecs.get(ii);
+
             double dist = rec.getLocation().distanceTo(userLoc);
             if (minDist > dist) {
                 minDist = dist;
-                minRec = rec;
+                minRec = ii;
             }
         }
 
         if (minDist < CommManager.MAX_NOTIFY_DISTANCE) {
             Log.d(TAG, "Found nearby recording, notifying");
 
-            notifyRecording(minRec);
+
+            notifyRecording(notifyRecs.get(minRec));
+            notifyRecs.remove(minRec);
         }
     }
 

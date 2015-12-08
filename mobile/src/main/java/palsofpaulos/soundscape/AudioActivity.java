@@ -18,6 +18,7 @@ import android.view.inputmethod.EditorInfo;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.CompoundButton;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -27,6 +28,7 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
+import android.widget.ToggleButton;
 
 import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -77,6 +79,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
     private ImageButton mapsButton;
     private ImageButton listButton;
+    private ToggleButton mapRecsButton;
     private ImageButton notifyButton;
     private ImageView playButtonBar;
     private ImageView playButtonBig;
@@ -109,6 +112,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
         // get recordings from saved preferences and populate listview
         getRecordings();
+        RecordingManager.getDBRecordings(this);
         recsView = (ListView) findViewById(R.id.listRecordings);
         recsAdapter = new RecordingAdapter(this, R.layout.listview_recordings, recs);
         recsView.setAdapter(recsAdapter);
@@ -154,7 +158,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         this.map = map;
         markerRecHashmap = new HashMap<>();
         for (int ii = 0; ii < recs.size(); ii++) {
-            addMarkerForRec(ii);
+            addMarkerForRec(recs.get(ii));
         }
         map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
             @Override
@@ -178,14 +182,13 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
         map.moveCamera(cameraUpdate);
     }
 
-    private void addMarkerForRec(int position) {
-        Recording rec = recs.get(position);
+    private void addMarkerForRec(Recording rec) {
         LatLng latLng = new LatLng(rec.getLocation().getLatitude(), rec.getLocation().getLongitude());
         Marker recMarker = map.addMarker(new MarkerOptions()
                 .position(latLng)
                 .title(rec.getName())
                 .snippet(rec.getDateString()));
-        mapMarkers.add(position, recMarker);
+        mapMarkers.add(recMarker);
         markerRecHashmap.put(recMarker, rec);
     }
 
@@ -232,7 +235,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
                 newRec.setName(intent.getStringExtra(CommManager.REC_NAME));
 
                 recs.add(0, newRec);
-                addMarkerForRec(0);
+                addMarkerForRec(recs.get(0));
 
                 updateRecsView();
             }
@@ -242,6 +245,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private void initializeButtons() {
         mapsButton = (ImageButton) findViewById(R.id.maps_button);
         listButton = (ImageButton) findViewById(R.id.list_button);
+        mapRecsButton = (ToggleButton) findViewById(R.id.map_recs_toggle);
         notifyButton = (ImageButton) findViewById(R.id.notify_button);
         playButtonBar = (ImageView) findViewById(R.id.play_pause_bar);
         playButtonBar.setImageResource(R.drawable.play_button);
@@ -282,6 +286,24 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void onClick(View v) {
                 closeMapLayout();
+            }
+        });
+
+        mapRecsButton.setOnCheckedChangeListener(new CompoundButton.OnCheckedChangeListener() {
+            @Override
+            public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
+                if (!isChecked) {
+                    map.clear();
+                    for (Recording rec : recs) {
+                        addMarkerForRec(rec);
+                    }
+                }
+                else {
+                    map.clear();
+                    for (Recording rec : RecordingManager.dbRecs) {
+                        addMarkerForRec(rec);
+                    }
+                }
             }
         });
 
