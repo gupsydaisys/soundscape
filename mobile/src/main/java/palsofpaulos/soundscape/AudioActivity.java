@@ -75,6 +75,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     private int barLayoutInitHeight;
 
     private boolean playBarExpanded = false;
+    private boolean playLayoutExpanded = false;
     private boolean preventPlayBarClose = true;
     private boolean blockSeekUpdate = false;
     private boolean notifyActive = false;
@@ -227,6 +228,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
 
                 try {
                     playRec(notifyRec);
+                    expandPlayLayout();
                 }
                 catch (RecordingException e) {
                     Log.e(TAG, e.getMessage());
@@ -729,6 +731,9 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     }
 
     public void expandPlayLayout() {
+        if (playLayoutExpanded) {
+            return;
+        }
         preventPlayBarClose = true;
         playLayout.setVisibility(View.VISIBLE);
 
@@ -743,6 +748,7 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void onAnimationEnd(Animation animation) {
                 listLayout.setVisibility(View.GONE);
+                playLayoutExpanded = true;
             }
 
             @Override
@@ -754,6 +760,10 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
     }
 
     public void closePlayLayout() {
+        if (!playLayoutExpanded) {
+            return;
+        }
+
         listLayout.setVisibility(View.VISIBLE);
         final HeightAnimation openListAnim = new HeightAnimation(listLayout, 0, listLayoutInitHeight, PLAY_LAYOUT_ANIMATION_DURATION);
         openListAnim.setAnimationListener(new Animation.AnimationListener() {
@@ -765,7 +775,9 @@ public class AudioActivity extends FragmentActivity implements OnMapReadyCallbac
             @Override
             public void onAnimationEnd(Animation animation) {
                 playLayout.setVisibility(View.GONE);
+                playLayoutExpanded = false;
                 preventPlayBarClose = false;
+
             }
 
             @Override

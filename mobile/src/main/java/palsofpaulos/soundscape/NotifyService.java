@@ -100,6 +100,7 @@ public class NotifyService extends Service {
 
         // Build intent for recording playback
         Intent recIntent = new Intent(CommManager.AUDIO_INTENT);
+        recIntent.addFlags(Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
         recIntent.putExtra(CommManager.REC_FILEPATH, CommManager.PLAY_PATH + rec.getFilePath());
         recIntent.putExtra(CommManager.REC_NAME, rec.getName());
         recIntent.putExtra(CommManager.REC_DATE, rec.getDateStorageString());
